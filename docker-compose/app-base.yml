@@ -1,0 +1,109 @@
+services:
+  php:
+    #image: aloeleaf/bkt-targyalo-php:latest
+    build:
+      context: ./build # The directory where the Dockerfile is located
+      dockerfile: Dockerfile # The name of the Dockerfile
+      args:
+        HTTP_PROXY: http://10.0.249.120:3128
+        HTTPS_PROXY: http://10.0.249.120:3128
+        NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+    container_name: php
+    environment:
+      # mysql environment
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - DB_HOST=db # The name of the database service in the Docker network
+      # ldap enviromnet
+      - LDAP_SERVER=${LDAP_SERVER}
+      - LDAP_DOMAIN=${LDAP_DOMAIN}
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_REQUIRED_GROUPS=${LDAP_REQUIRED_GROUPS}
+    volumes:
+      - ../web:/var/www/html
+      - ../php:/var/www/php
+      - ../etc/php/php.ini:/usr/local/etc/php/php.ini
+    working_dir: /var/www/html
+    depends_on:
+      - db
+    networks: 
+      - local  
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    # ports:
+    #    - "8082:80"
+    environment:
+        HTTP_PROXY: http://10.0.249.120:3128
+        HTTPS_PROXY: http://10.0.249.120:3128
+        NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+    volumes:
+      - ../web:/var/www/html
+      - ../etc/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - local
+      - traefikproxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
+      - "traefik.http.routers.nginx.entrypoints=websecure"
+      - "traefik.http.routers.nginx.tls=true"
+      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+
+
+  db:
+    image: mariadb:latest
+    container_name: db
+    ports:
+      - "3306:3306"
+    environment:
+      HTTP_PROXY: http://10.0.249.120:3128
+      HTTPS_PROXY: http://10.0.249.120:3128
+      NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - local
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    # ports:
+    #   - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      HTTP_PROXY: http://10.0.249.120:3128
+      HTTPS_PROXY: http://10.0.249.120:3128
+      NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+    depends_on:
+      - db
+    networks:
+      - local
+      - traefikproxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.phpmyadmin.rule=Host(`test_tnaptar_phpmyadmin.bpkornyekitvsz.birosagiad.hu`)"
+      - "traefik.http.routers.phpmyadmin.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadmin.tls=true"
+
+
+volumes:
+  db_data:
+
+networks:
+  local:
+    driver: bridge
+  traefikproxy:
+    name: traefikproxy
+    external: true
+ 

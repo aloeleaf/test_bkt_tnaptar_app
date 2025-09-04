@@ -1,0 +1,1 @@
+docker compose exec -T db mariadb -uroot -pp1ssw2rd bktAppdb < ./db/bktAppdb.sql
