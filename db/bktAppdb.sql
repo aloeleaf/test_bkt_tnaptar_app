@@ -46,6 +46,8 @@ CREATE TABLE `rooms` (
   `subject` varchar(255) NOT NULL,
   `letszam` int(11) NOT NULL,
   `resztvevok` varchar(100) NOT NULL,
+  `alperes_terhelt` varchar(100) NOT NULL,
+  `felperes_vadlo` varchar(100) NOT NULL,
   `foglalas` varchar(255) NOT NULL,
   PRIMARY KEY (`date`, `rooms`, `start_time`) -- ÖSSZETETT ELSŐDLEGES KULCS
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
