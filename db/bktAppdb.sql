@@ -1,34 +1,25 @@
--- phpMyAdmin SQL Dump
--- version 5.2.2
--- https://www.phpmyadmin.net/
---
--- Gép: db:3306
--- Létrehozás ideje: 2025. Júl 04. 13:33
--- Kiszolgáló verziója: 11.8.2-MariaDB-ubu2404
--- PHP verzió: 8.2.27
+-- Bírósági Tárgyaló Naptár (bktApp) Adatbázis Struktúra
+-- Verzió: 1.0
+-- Készült: 2025-09-15
+-- Ez a szkript létrehozza és feltölti az alkalmazás adatbázisát.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
 --
 -- Adatbázis: `bktAppdb`
+-- Létrehozza az adatbázist, ha még nem létezik.
 --
 CREATE DATABASE IF NOT EXISTS `bktAppdb` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci;
 USE `bktAppdb`;
 
--- --------------------------------------------------------
 
 --
 -- Tábla szerkezet ehhez a táblához `name`
+-- Felhasználói bejelentkezési adatok és időbélyegek tárolására.
 --
-
 DROP TABLE IF EXISTS `name`;
 CREATE TABLE `name` (
   `id` int(11) NOT NULL,
@@ -36,22 +27,11 @@ CREATE TABLE `name` (
   `last_login` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
---
--- A tábla adatainak kiíratása `name`
---
-
-INSERT INTO `name` (`id`, `name`, `last_login`) VALUES
-(31, 'Hát Izsák', '2025-07-04 10:39:30'),
-(32, 'Hát Izsák', '2025-07-04 10:47:06'),
-(33, 'Papp Ágoston [Budapest Környéki Törvényszék]', '2025-07-04 12:42:14'),
-(34, 'Papp Ágoston [Budapest Környéki Törvényszék]', '2025-07-04 15:24:30');
-
--- --------------------------------------------------------
 
 --
 -- Tábla szerkezet ehhez a táblához `rooms`
+-- A tárgyalási bejegyzések (foglalások) fő táblája.
 --
-
 DROP TABLE IF EXISTS `rooms`;
 CREATE TABLE `rooms` (
   `id` int(11) NOT NULL,
@@ -67,12 +47,15 @@ CREATE TABLE `rooms` (
   `letszam` int(11) NOT NULL,
   `resztvevok` varchar(100) NOT NULL,
   `foglalas` varchar(255) NOT NULL,
+  PRIMARY KEY (`date`, `rooms`, `start_time`) -- ÖSSZETETT ELSŐDLEGES KULCS
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 
 --
 -- Tábla szerkezet ehhez a táblához `settings`
+-- Kulcs-érték párok tárolására szolgál, főként a legördülő menük
+-- (birosag, tanacs, room, resztvevok) feltöltéséhez.
 --
-
 DROP TABLE IF EXISTS `settings`;
 CREATE TABLE `settings` (
   `id` int(11) NOT NULL,
@@ -82,10 +65,11 @@ CREATE TABLE `settings` (
   `active` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+
 --
 -- A tábla adatainak kiíratása `settings`
+-- Alapértelmezett beállítások és legördülő menü elemek.
 --
-
 INSERT INTO `settings` (`id`, `category`, `value`, `sort_order`, `active`) VALUES
 (19, 'birosag', 'Érdi Járásbíróság', 0, 1),
 (20, 'birosag', 'Budapest Környéki Törvényszék', 0, 1),
@@ -533,9 +517,13 @@ INSERT INTO `settings` (`id`, `category`, `value`, `sort_order`, `active`) VALUE
 (574, 'tanacs', 'Kocsisné dr. Niedermüller Angelika', 0, 1),
 (575, 'tanacs', 'Redlné dr. Mészáros Ildikó', 0, 1);
 
+
 --
 -- Indexek a kiírt táblákhoz
+-- Az elsődleges kulcsok beállítása a táblákhoz.
 --
+
+
 
 --
 -- A tábla indexei `name`
@@ -555,8 +543,11 @@ ALTER TABLE `rooms`
 ALTER TABLE `settings`
   ADD PRIMARY KEY (`id`);
 
+-- --------------------------------------------------------
+
 --
--- A kiírt táblák AUTO_INCREMENT értéke
+-- AUTO_INCREMENT a kiírt táblákhoz
+-- Az automatikusan növekvő ID-k beállítása.
 --
 
 --
@@ -578,6 +569,3 @@ ALTER TABLE `settings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=576;
 COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
