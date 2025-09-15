@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Az üzenet elrejtése a beállított idő után
             setTimeout(() => {
                 messageDiv.classList.add('d-none');
-            }, MESSAGE_DISPLAY_DURATION); 
+            }, MESSAGE_DISPLAY_DURATION);
         }
     }
 
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (selectElement.options[i].value === valueToSelect) {
                 selectElement.selectedIndex = i;
                 found = true;
-                
+
                 // Kiváltunk egy 'change' eseményt, hogy a böngésző frissítse a vizuális megjelenítést
                 const event = new Event('change');
                 selectElement.dispatchEvent(event);
@@ -40,47 +40,94 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Funkció a dropdown listák feltöltésére API-ból
+    // // Funkció a dropdown listák feltöltésére API-ból
+    // async function populateDropdowns() {
+    //     const dropdownsToFetch = {
+    //         'court_name': 'birosag',
+    //         'council_name': 'tanacs',
+    //         'room_number': 'room',
+    //         'resztvevok': 'resztvevok'
+    //     };
+
+    //     for (const [selectId, category] of Object.entries(dropdownsToFetch)) {
+    //         const selectElement = document.getElementById(selectId);
+    //         if (!selectElement) {
+    //             console.warn(`populateDropdowns: A(z) ${selectId} select elem nem található a DOM-ban.`);
+    //             continue;
+    //         }
+
+    //         // Töröljük a meglévő opciókat, kivéve az elsőt ("Válasszon...")
+    //         while (selectElement.options.length > 1) { 
+    //             selectElement.remove(1); 
+    //         }
+
+    //         try {
+    //             const response = await fetch(`app/get_dropdown_items.php?category=${category}`);
+    //             if (!response.ok) throw new Error(`Hiba az adatok lekérdezésekor a(z) ${category} kategóriához.`);
+    //             const data = await response.json();
+
+    //             if (data.success && Array.isArray(data.data)) {
+    //                 data.data.forEach(item => {
+    //                     const option = document.createElement('option');
+    //                     option.value = item;
+    //                     option.textContent = item;
+    //                     selectElement.appendChild(option);
+    //                 });
+    //             } else {
+    //                 console.error(`populateDropdowns: Hiba a(z) ${category} dropdown adatok betöltésekor:`, data.message || 'Ismeretlen hiba');
+    //             }
+    //         } catch (error) {
+    //             console.error(`populateDropdowns: Hiba a(z) ${category} dropdown betöltésekor:`, error);
+    //         }
+    //     }
+    // }
+
+
     async function populateDropdowns() {
         const dropdownsToFetch = {
-            'court_name': 'birosag',
-            'council_name': 'tanacs',
-            'room_number': 'room',
-            'resztvevok': 'resztvevok'
+            court_name: 'birosag',
+            council_name: 'tanacs',
+            room_number: 'room',
+            resztvevok: 'resztvevok'
         };
 
-        for (const [selectId, category] of Object.entries(dropdownsToFetch)) {
+        for (const [selectId, type] of Object.entries(dropdownsToFetch)) {
             const selectElement = document.getElementById(selectId);
-            if (!selectElement) {
-                console.warn(`populateDropdowns: A(z) ${selectId} select elem nem található a DOM-ban.`);
-                continue;
+            if (!selectElement) continue;
+
+            // keep first "Válasszon..." option, clear the rest
+            while (selectElement.options.length > 1) {
+                selectElement.remove(1);
             }
 
-            // Töröljük a meglévő opciókat, kivéve az elsőt ("Válasszon...")
-            while (selectElement.options.length > 1) { 
-                selectElement.remove(1); 
-            }
-
+            let raw = '';
             try {
-                const response = await fetch(`app/get_dropdown_items.php?category=${category}`);
-                if (!response.ok) throw new Error(`Hiba az adatok lekérdezésekor a(z) ${category} kategóriához.`);
-                const data = await response.json();
+                // NOTE: correct case: getItems.php (capital I)
+                const response = await fetch(`app/getItems.php?type=${encodeURIComponent(type)}`, { cache: 'no-store' });
+                raw = await response.text();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${raw}`);
+                }
+
+                const data = JSON.parse(raw);
 
                 if (data.success && Array.isArray(data.data)) {
                     data.data.forEach(item => {
                         const option = document.createElement('option');
-                        option.value = item;
-                        option.textContent = item;
+                        option.value = item.value;
+                        option.textContent = item.value;
                         selectElement.appendChild(option);
                     });
                 } else {
-                    console.error(`populateDropdowns: Hiba a(z) ${category} dropdown adatok betöltésekor:`, data.message || 'Ismeretlen hiba');
+                    throw new Error(data.message || 'Helytelen JSON szerkezet.');
                 }
-            } catch (error) {
-                console.error(`populateDropdowns: Hiba a(z) ${category} dropdown betöltésekor:`, error);
+            } catch (err) {
+                console.error(`populateDropdowns: Hiba a(z) ${type} dropdown betöltésekor:`, err.message, raw);
             }
         }
     }
+
 
     // Funkció a kereső inicializálására és a DOM átrendezésére
     function initSearch() {
@@ -97,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Eseményfigyelő a keresőmező bemenetére
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             const searchTerm = searchInput.value.toLowerCase();
 
             // KULCSFONTOSSÁGÚ VÁLTOZTATÁS: A szülő oszlop div-eket gyűjtjük be
@@ -143,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Funkció az oldalbetöltés kezelésére
     // Hozzáadva a 'params' objektumot a rugalmasabb paraméterkezeléshez
-    function loadPage(page, dataId = null, params = {}) { 
+    function loadPage(page, dataId = null, params = {}) {
         let url = page;
         const urlParams = new URLSearchParams();
 
@@ -168,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // KULCSFONTOSSÁGÚ VÁLTOZTATÁS: Cache-busting paraméter hozzáadása
         // Ez biztosítja, hogy a böngésző ne a gyorsítótárból szolgálja ki a kérést
         url += (url.includes('?') ? '&' : '?') + `_t=${new Date().getTime()}`;
-        
+
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error('Hiba a betöltés során');
@@ -186,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (orderByParam) {
                         setSelectedOption(document.getElementById('sortOrderSelect'), orderByParam);
                     }
-                } 
+                }
                 // Ha settings.php-t töltünk be, akkor hívjuk meg a reloadAllLists() függvényt
                 else if (page === 'settings.php' && typeof reloadAllLists === 'function') {
                     reloadAllLists();
@@ -227,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             // ÚJ: Eseményfigyelő a "Mégse" gombra az új rögzítés módban is
                             const cancelBtn = document.getElementById('cancelEditBtn');
                             if (cancelBtn) {
-                                cancelBtn.addEventListener('click', function() {
+                                cancelBtn.addEventListener('click', function () {
                                     loadPage('list.php'); // Vissza a listanézetre
                                 });
                             }
@@ -251,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success && data.data) {
                     const entryData = data.data; // Változó neve módosítva
-                    
+
                     // Feltöltjük az űrlap mezőit az adatokkal
                     // Rejtett ID mező
                     document.getElementById('recordId').value = entryData.id || '';
@@ -265,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Input/textarea mezők feltöltése
                     document.getElementById('date').value = entryData.date || '';
-                    document.getElementById('sorszam').value = entryData.sorszam || ''; 
+                    document.getElementById('sorszam').value = entryData.sorszam || '';
                     document.getElementById('ido').value = entryData.time ? entryData.time.substring(0, 5) : ''; // Idő formázása hh:mm-re
                     document.getElementById('ugyszam').value = entryData.ugyszam || '';
                     document.getElementById('letszam').value = entryData.letszam || '';
@@ -288,14 +335,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     const jegyzekForm = document.getElementById('jegyzekForm');
                     if (jegyzekForm) {
                         // Először eltávolítjuk a régi eseményfigyelőt, ha volt
-                        jegyzekForm.removeEventListener('submit', handleNewEntrySubmit); 
+                        jegyzekForm.removeEventListener('submit', handleNewEntrySubmit);
                         jegyzekForm.addEventListener('submit', handleEditFormSubmit);
                     }
 
                     // Eseményfigyelő a "Mégse" gombra
                     const cancelBtn = document.getElementById('cancelEditBtn');
                     if (cancelBtn) {
-                        cancelBtn.addEventListener('click', function() {
+                        cancelBtn.addEventListener('click', function () {
                             loadPage('list.php'); // Vissza a listanézetre
                         });
                     }
@@ -318,28 +365,28 @@ document.addEventListener('DOMContentLoaded', function () {
         const form = e.target;
         const formData = new FormData(form);
 
-        fetch('/app/process_entry.php', { 
+        fetch('/app/process_entry.php', {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Hiba a rögzítés során');
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showMessage('formMessage', 'Sikeres rögzítés!', 'success'); 
-                // Késleltetjük az oldalbetöltést, hogy az üzenet látható legyen
-                setTimeout(() => {
-                    loadPage('list.php'); 
-                }, MESSAGE_DISPLAY_DURATION);
-            } else {
-                showMessage('formMessage', data.message || 'Hiba történt a rögzítéskor.', 'danger');
-            }
-        })
-        .catch(error => {
-            showMessage('formMessage', `Hiba a rögzítés során: ${error.message}`, 'danger');
-        });
+            .then(response => {
+                if (!response.ok) throw new Error('Hiba a rögzítés során');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showMessage('formMessage', 'Sikeres rögzítés!', 'success');
+                    // Késleltetjük az oldalbetöltést, hogy az üzenet látható legyen
+                    setTimeout(() => {
+                        loadPage('list.php');
+                    }, MESSAGE_DISPLAY_DURATION);
+                } else {
+                    showMessage('formMessage', data.message || 'Hiba történt a rögzítéskor.', 'danger');
+                }
+            })
+            .catch(error => {
+                showMessage('formMessage', `Hiba a rögzítés során: ${error.message}`, 'danger');
+            });
     }
 
     // Funkció a szerkesztő űrlap AJAX-os beküldésének kezelésére
@@ -353,24 +400,24 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Hiba a mentés során');
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showMessage('formMessage', data.message, 'success');
-                // Késleltetjük az oldalbetöltést, hogy az üzenet látható legyen
-                setTimeout(() => {
-                    loadPage('list.php'); 
-                }, MESSAGE_DISPLAY_DURATION);
-            } else {
-                showMessage('formMessage', data.message || 'Hiba történt a mentéskor.', 'danger');
-            }
-        })
-        .catch(error => {
-            showMessage('formMessage', `Hiba a mentés során: ${error.message}`, 'danger');
-        });
+            .then(response => {
+                if (!response.ok) throw new Error('Hiba a mentés során');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showMessage('formMessage', data.message, 'success');
+                    // Késleltetjük az oldalbetöltést, hogy az üzenet látható legyen
+                    setTimeout(() => {
+                        loadPage('list.php');
+                    }, MESSAGE_DISPLAY_DURATION);
+                } else {
+                    showMessage('formMessage', data.message || 'Hiba történt a mentéskor.', 'danger');
+                }
+            })
+            .catch(error => {
+                showMessage('formMessage', `Hiba a mentés során: ${error.message}`, 'danger');
+            });
     }
 
     // Automatikusan betöltjük az alapértelmezett oldalt (list.php) az oldalbetöltéskor
@@ -381,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             const page = this.getAttribute('data-page');
-            
+
             // Ha a rogzites.php-t töltjük be, de nem szerkesztési módban,
             // akkor győződjünk meg róla, hogy az űrlap tiszta legyen
             if (page === 'rogzites.php') {
@@ -393,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Eseménydelegálás a contentArea-ra a dinamikusan betöltött elemekhez
-    contentArea.addEventListener('click', function(e) {
+    contentArea.addEventListener('click', function (e) {
         // Ellenőrizzük, hogy a kattintás egy "edit-button" osztályú elemen történt-e
         const closestButton = e.target.closest('.edit-button');
         const exportButton = e.target.closest('#exportCsvBtn'); // export gomb ellenőrzése
@@ -457,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (link.download !== undefined) { // Modern böngészők támogatása
                     const url = URL.createObjectURL(blob);
                     link.setAttribute('href', url);
-                    link.setAttribute('download', 'bejegyzesek_' + new Date().toISOString().slice(0,10) + '.csv'); // Fájlnév módosítva
+                    link.setAttribute('download', 'bejegyzesek_' + new Date().toISOString().slice(0, 10) + '.csv'); // Fájlnév módosítva
                     link.style.visibility = 'hidden';
                     document.body.appendChild(link);
                     link.click();
@@ -465,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     showMessage('formMessage', 'A böngészője nem támogatja a fájlletöltést. Kérjük, másolja ki az adatokat manuálisan.', 'warning');
                 }
-                
+
                 showMessage('formMessage', 'Adatok sikeresen exportálva CSV-be!', 'success'); // Használjuk a showMessage-t
             } else {
                 showMessage('formMessage', result.message || 'Hiba történt az adatok lekérdezésekor a CSV exportáláshoz.', 'danger');

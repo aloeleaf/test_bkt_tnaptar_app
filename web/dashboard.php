@@ -27,7 +27,7 @@ $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <?php
-            if (in_array('BKT_WebLoginGroup', $_SESSION['groups'])) {
+            if (in_array('BKT_TargyaloFoglalo', $_SESSION['groups'])) {
                 echo '<li class="nav-item">
                         <a class="nav-link load-page" href="#" data-page="list.php"><i class="fa-solid fa-people-roof"></i> Tárgyalási jegyzékek</a>
                     </li>
@@ -35,7 +35,7 @@ $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
                         <a class="nav-link load-page" href="#" data-page="rogzites.php"><i class="fa-solid fa-list-check"></i> Rögzítés</a>
                     </li>';
             }
-            if (in_array('BKT_WebLoginGroupAdmin', $_SESSION['groups'])) {
+            if (in_array('BKT_TargyaloFoglaloAdmin', $_SESSION['groups'])) {
                 echo '<li class="nav-item">
                         <a class="nav-link load-page" href="#" data-page="list.php"><i class="fa-solid fa-people-roof"></i> Tárgyalási jegyzékek</a>
                     </li>
@@ -66,10 +66,10 @@ $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
     <div id="content-area" class="container"></div>
     
     <footer>
-        <div class="container">
+        <!--div class="container">
             <p>&copy; <?php echo date("Y"); ?> | Budapest Környéki Törvényszék | Minden jog fenntartva. <br />
             Készítette: Martínez Luis Dávid & Papp Ágoston</p>
-        </div>
+        </div-->
     </footer>
 
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>

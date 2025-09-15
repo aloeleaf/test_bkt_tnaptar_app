@@ -537,7 +537,8 @@ ALTER TABLE `name`
 -- A tábla indexei `rooms`
 --
 ALTER TABLE `rooms`
-  ADD PRIMARY KEY (`id`);
+    ADD UNIQUE KEY `id` (`id`);
+
 
 --
 -- A tábla indexei `settings`
