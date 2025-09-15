@@ -35,20 +35,20 @@ CREATE TABLE `name` (
 DROP TABLE IF EXISTS `rooms`;
 CREATE TABLE `rooms` (
   `id` int(11) NOT NULL,
-  `birosag` varchar(255) NOT NULL,
-  `tanacs` varchar(255) NOT NULL,
-  `date` date NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL DEFAULT '16:00:00',
-  `rooms` varchar(255) NOT NULL,
-  `sorszam` varchar(255) DEFAULT NULL,
-  `ugyszam` varchar(255) NOT NULL,
-  `subject` varchar(255) NOT NULL,
-  `letszam` int(11) NOT NULL,
-  `resztvevok` varchar(100) NOT NULL,
-  `alperes_terhelt` varchar(100) NOT NULL,
-  `felperes_vadlo` varchar(100) NOT NULL,
-  `foglalas` varchar(255) NOT NULL,
+  `birosag` varchar(255) NOT NULL, -- Bíróság neve
+  `tanacs` varchar(255) NOT NULL, -- Tanács vagy bíró neve
+  `date` date NOT NULL, -- Foglalás dátuma
+  `start_time` time NOT NULL, -- Foglalás kezdési ideje
+  `end_time` time NOT NULL DEFAULT '16:00:00', -- Foglalás befejezési ideje
+  `rooms` varchar(255) NOT NULL, -- Tárgyaló azonosító
+  `sorszam` varchar(255) DEFAULT NULL, -- Sorszám vagy egyéb azonosító
+  `ugyszam` varchar(255) NOT NULL, -- Ügyszám
+  `subject` varchar(255) NOT NULL, -- Ügy tárgya vagy leírása
+  `letszam` int(11) NOT NULL, -- Idézettek létszáma
+  `resztvevok` varchar(100) NOT NULL, -- Résztvevők típusa (pl. Alperes - Felperes)
+  `alperes_terhelt` varchar(100) NOT NULL, -- Alperes vagy Terhelt neve
+  `felperes_vadlo` varchar(100) NOT NULL, -- Felperes vagy Vádló neve
+  `foglalas` varchar(255) NOT NULL, -- Foglalás összevont információ
   PRIMARY KEY (`date`, `rooms`, `start_time`) -- ÖSSZETETT ELSŐDLEGES KULCS
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
