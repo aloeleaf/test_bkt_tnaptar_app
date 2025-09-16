@@ -39,8 +39,10 @@ try {
 
 // Átalakítjuk a mezőket a megjelenítéshez
 $filtered_entries = array_map(function ($row) {
-    $start_time = $row['start_time'] ?? ''; // Fixed: was 'time'
-    $formatted_time = $start_time ? substr($start_time, 0, 5) : '';
+    $start_time = $row['start_time'] ?? '';
+    $end_time = $row['end_time'] ?? '';
+    $formatted_start_time = $start_time ? substr($start_time, 0, 5) : '';
+    $formatted_end_time = $end_time ? substr($end_time, 0, 5) : '';
     
     // Split subject into parts
     $subject_parts = explode("\n", $row['subject'] ?? '');
@@ -51,7 +53,9 @@ $filtered_entries = array_map(function ($row) {
         'session_date'   => $row['date'] ?? '',
         'room_number'    => $row['rooms'] ?? '',
         'sorszam'        => $row['sorszam'] ?? '',
-        'ido'            => $formatted_time,
+        'kezd_ido'       => $formatted_start_time,
+        'befejez_ido'    => $formatted_end_time,
+        'ido'            => $formatted_start_time, // Backward compatibility
         'ugyszam'        => $row['ugyszam'] ?? '',
         'persons'        => $row['resztvevok'] ?? '',
         'alperes_terhelt'=> $row['alperes_terhelt'] ?? '',
@@ -114,9 +118,12 @@ $filtered_entries = array_map(function ($row) {
                             <div class="row">
                                 <div class="col-12 mb-2"><strong title="A tárgyalás sorszáma az adott napon.">Sorszám:</strong> <?= htmlspecialchars($data['sorszam'] ?? 'N/A'); ?></div>
                             </div>
-                            <div class="row">
-                                <div class="col-12 mb-2"><strong title="A tárgyalás kezdési időpontja.">Idő:</strong> <?= htmlspecialchars($data['ido'] ?? 'N/A'); ?></div>
+                             <div class="row">
+                                <div class="col-12 mb-2"><strong title="A tárgyalás kezdési időpontja.">Kezdés:</strong> <?= htmlspecialchars($data['kezd_ido'] ?? 'N/A'); ?></div>
                             </div>
+                            <div class="row">
+                                <div class="col-12 mb-2"><strong title="A tárgyalás befejezési időpontja.">Befejezés:</strong> <?= htmlspecialchars($data['befejez_ido'] ?? 'N/A'); ?></div>
+                            </div>       
                             <div class="row">
                                 <div class="col-12 mb-2"><strong title="A tárgyalás ügyazonosító száma.">Ügyszám:</strong> <?= htmlspecialchars($data['ugyszam'] ?? 'N/A'); ?></div>
                             </div>

@@ -1,5 +1,5 @@
 <?php
-// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\addItem.php
+// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\updateItem.php
 ob_start();
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -18,17 +18,22 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     $type = $input['type'] ?? $_POST['type'] ?? null;
-    $name = $input['name'] ?? $_POST['name'] ?? null;
+    $id = $input['id'] ?? $_POST['id'] ?? null;
+    $value = $input['value'] ?? $_POST['value'] ?? null;
 
     if (!$type) {
         throw new Exception('Nincs megadva a kért elem típusa.');
     }
     
-    if (!$name || trim($name) === '') {
-        throw new Exception('Nincs megadva az elem neve.');
+    if (!$id || !is_numeric($id)) {
+        throw new Exception('Nincs megadva érvényes elem azonosító.');
     }
 
-    $name = trim($name);
+    if (!$value || trim($value) === '') {
+        throw new Exception('Nincs megadva az új érték.');
+    }
+
+    $value = trim($value);
 
     // Validate allowed types
     $allowedTypes = ['birosag', 'tanacs', 'room', 'resztvevok'];
@@ -36,33 +41,24 @@ try {
         throw new Exception('Érvénytelen elem típus: ' . $type);
     }
 
-    // Check if already exists
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE category = :category AND value = :value");
-    $stmt->execute([':category' => $type, ':value' => $name]);
+    // Check if new value already exists (except for current item)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE category = :category AND value = :value AND id != :id");
+    $stmt->execute([':category' => $type, ':value' => $value, ':id' => (int)$id]);
     
     if ($stmt->fetchColumn() > 0) {
-        throw new Exception('Ez az elem már létezik.');
+        throw new Exception('Ez az érték már létezik másik elemnél.');
     }
 
-    // Get next sort order
-    $stmt = $pdo->prepare("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM settings WHERE category = :category");
-    $stmt->execute([':category' => $type]);
-    $sortOrder = $stmt->fetchColumn();
+    // Update the item
+    $stmt = $pdo->prepare("UPDATE settings SET value = :value WHERE category = :category AND id = :id");
+    $stmt->execute([':value' => $value, ':category' => $type, ':id' => (int)$id]);
 
-    // Insert new item
-    $stmt = $pdo->prepare("
-        INSERT INTO settings (category, value, active, sort_order) 
-        VALUES (:category, :value, 1, :sort_order)
-    ");
-    
-    $stmt->execute([
-        ':category' => $type,
-        ':value' => $name,
-        ':sort_order' => $sortOrder
-    ]);
-
-    $response['success'] = true;
-    $response['message'] = 'Sikeresen hozzáadva!';
+    if ($stmt->rowCount() > 0) {
+        $response['success'] = true;
+        $response['message'] = 'Sikeresen módosítva!';
+    } else {
+        throw new Exception('Az elem nem található vagy nincs változás.');
+    }
 
 } catch (PDOException $e) {
     http_response_code(500);
