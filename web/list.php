@@ -130,7 +130,7 @@ $filtered_entries = array_map(function ($row) {
                                 <div class="col-12 mb-2"><strong title="Felperes vagy vádló neve.">Felperes/Vádló:</strong> <?= htmlspecialchars($data['felperes_vadlo'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">
-                                <div class="col-12 mb-2"><strong title="Az idézettek szám.">Id.:</strong> <?= htmlspecialchars($data['azon'] ?? 'N/A'); ?></div>
+                                <div class="col-12 mb-2"><strong title="Az idézettek szám.">Idézettek száma:</strong> <?= htmlspecialchars($data['azon'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">
                                 <div class="col-12 mb-2"><strong title="Az ügy minősítése vagy típusa.">Ügyminőség:</strong> <?= nl2br(htmlspecialchars($data['ugyminoseg'] ?? 'N/A')); ?></div>
