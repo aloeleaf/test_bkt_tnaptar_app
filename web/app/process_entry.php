@@ -2,10 +2,15 @@
 $config = require __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/Database.php';
 
+ob_start();
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 header('Content-Type: application/json; charset=utf-8');
+
 
 function respond(array $payload, int $code = 200): void {
     http_response_code($code);
+    while (ob_get_level() > 0) { ob_end_clean(); }
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
@@ -37,13 +42,17 @@ if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $s
     respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők.'], 422);
 }
 
-// Date
+
+// Validate date
 $dateObj = DateTime::createFromFormat('Y-m-d', $dateInput);
-$err = DateTime::getLastErrors();
-if (!$dateObj || $err['warning_count'] || $err['error_count']) {
+$dtErr = DateTime::getLastErrors();
+$warnCount = is_array($dtErr) ? ($dtErr['warning_count'] ?? 0) : 0;
+$errCount  = is_array($dtErr) ? ($dtErr['error_count'] ?? 0) : 0;
+if (!$dateObj || $warnCount > 0 || $errCount > 0) {
     respond(['success' => false, 'message' => 'Érvénytelen dátum formátum (YYYY-MM-DD).'], 422);
 }
 $dateForDb = $dateObj->format('Y-m-d');
+
 
 // Times
 $startObj = DateTime::createFromFormat('H:i', $startInput);

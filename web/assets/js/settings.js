@@ -6,7 +6,8 @@ function reloadAllLists() {
     loadList('resztvevok');
 }
 
-// Fetch and render one category list
+
+// Load list items for a given category
 async function loadList(category) {
     const listContainer = document.getElementById(`${category}-list`);
     const messageDiv = document.getElementById(`${category}-message`);
@@ -19,60 +20,66 @@ async function loadList(category) {
 
     try {
         const response = await fetch(url, { cache: 'no-store' });
-        const raw = await response.text(); // robust: read as text first
+        const raw = await response.text();
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${raw.slice(0, 200)}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${raw.slice(0, 200)}`);
 
         let result;
         try {
             result = JSON.parse(raw);
-        } catch (e) {
+        } catch {
             throw new Error(`Érvénytelen JSON válasz: ${raw.slice(0, 200)}`);
         }
 
-        if (result.success && Array.isArray(result.data)) {
-            listContainer.innerHTML = '';
-            if (result.data.length === 0) {
-                listContainer.innerHTML = '<li class="list-group-item">Nincsenek elemek ebben a kategóriában.</li>';
-                return;
-            }
+        // Normalize items from various possible shapes
+        const items =
+            Array.isArray(result) ? result :
+            Array.isArray(result?.data) ? result.data :
+            Array.isArray(result?.data?.items) ? result.data.items :
+            null;
 
-            result.data.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-                const span = document.createElement('span');
-                span.textContent = item.value;
-
-                const btnGroup = document.createElement('div');
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-outline-secondary me-2 edit-item-btn';
-                editBtn.setAttribute('title', 'Szerkesztés');
-                editBtn.dataset.id = item.id;
-                editBtn.dataset.value = item.value;
-                editBtn.dataset.category = category;
-                editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'btn btn-sm btn-outline-danger delete-item-btn';
-                delBtn.setAttribute('title', 'Törlés');
-                delBtn.dataset.id = item.id;
-                delBtn.dataset.category = category;
-                delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-
-                btnGroup.appendChild(editBtn);
-                btnGroup.appendChild(delBtn);
-
-                li.appendChild(span);
-                li.appendChild(btnGroup);
-                listContainer.appendChild(li);
-            });
-        } else {
-            throw new Error(result.message || 'Helytelen adatformátum érkezett a szerverről.');
+        if (!items) {
+            console.error('Váratlan szerver válasz:', result);
+            throw new Error('Váratlan adatszerkezet (nincs lista).');
         }
+
+        listContainer.innerHTML = '';
+        if (items.length === 0) {
+            listContainer.innerHTML = '<li class="list-group-item">Nincsenek elemek ebben a kategóriában.</li>';
+            return;
+        }
+
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+            const span = document.createElement('span');
+            span.textContent = item.value ?? String(item);
+
+            const btnGroup = document.createElement('div');
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-sm btn-outline-secondary me-2 edit-item-btn';
+            editBtn.title = 'Szerkesztés';
+            editBtn.dataset.id = item.id ?? '';
+            editBtn.dataset.value = item.value ?? String(item);
+            editBtn.dataset.category = category;
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-sm btn-outline-danger delete-item-btn';
+            delBtn.title = 'Törlés';
+            delBtn.dataset.id = item.id ?? '';
+            delBtn.dataset.category = category;
+            delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+
+            btnGroup.appendChild(editBtn);
+            btnGroup.appendChild(delBtn);
+
+            li.appendChild(span);
+            li.appendChild(btnGroup);
+            listContainer.appendChild(li);
+        });
     } catch (error) {
         listContainer.innerHTML = `<li class="list-group-item text-danger">Hiba a lista betöltésekor: ${error.message}</li>`;
         if (messageDiv) {
@@ -82,6 +89,7 @@ async function loadList(category) {
         }
     }
 }
+
 
 // Add item
 async function addItem(category) {

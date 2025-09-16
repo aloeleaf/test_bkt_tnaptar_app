@@ -40,49 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // // Funkció a dropdown listák feltöltésére API-ból
-    // async function populateDropdowns() {
-    //     const dropdownsToFetch = {
-    //         'court_name': 'birosag',
-    //         'council_name': 'tanacs',
-    //         'room_number': 'room',
-    //         'resztvevok': 'resztvevok'
-    //     };
-
-    //     for (const [selectId, category] of Object.entries(dropdownsToFetch)) {
-    //         const selectElement = document.getElementById(selectId);
-    //         if (!selectElement) {
-    //             console.warn(`populateDropdowns: A(z) ${selectId} select elem nem található a DOM-ban.`);
-    //             continue;
-    //         }
-
-    //         // Töröljük a meglévő opciókat, kivéve az elsőt ("Válasszon...")
-    //         while (selectElement.options.length > 1) { 
-    //             selectElement.remove(1); 
-    //         }
-
-    //         try {
-    //             const response = await fetch(`app/get_dropdown_items.php?category=${category}`);
-    //             if (!response.ok) throw new Error(`Hiba az adatok lekérdezésekor a(z) ${category} kategóriához.`);
-    //             const data = await response.json();
-
-    //             if (data.success && Array.isArray(data.data)) {
-    //                 data.data.forEach(item => {
-    //                     const option = document.createElement('option');
-    //                     option.value = item;
-    //                     option.textContent = item;
-    //                     selectElement.appendChild(option);
-    //                 });
-    //             } else {
-    //                 console.error(`populateDropdowns: Hiba a(z) ${category} dropdown adatok betöltésekor:`, data.message || 'Ismeretlen hiba');
-    //             }
-    //         } catch (error) {
-    //             console.error(`populateDropdowns: Hiba a(z) ${category} dropdown betöltésekor:`, error);
-    //         }
-    //     }
-    // }
-
-
+    // Funkció a legördülő menük dinamikus feltöltésére
     async function populateDropdowns() {
         const dropdownsToFetch = {
             court_name: 'birosag',
@@ -358,31 +316,32 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Funkció az ÚJ bejegyzés rögzítő űrlap AJAX-os beküldésének kezelésére
+    // Új függvény az új bejegyzés rögzítésének kezelésére
     function handleNewEntrySubmit(e) {
-        e.preventDefault(); // Megakadályozzuk az alapértelmezett űrlap beküldést
-
+        e.preventDefault();
         const form = e.target;
         const formData = new FormData(form);
 
-        fetch('/app/process_entry.php', {
+        fetch('app/process_entry.php', { // was '/app/process_entry.php'
             method: 'POST',
-            body: formData
+            body: formData,
+            cache: 'no-store'
         })
-            .then(response => {
-                if (!response.ok) throw new Error('Hiba a rögzítés során');
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    showMessage('formMessage', 'Sikeres rögzítés!', 'success');
-                    // Késleltetjük az oldalbetöltést, hogy az üzenet látható legyen
-                    setTimeout(() => {
-                        loadPage('list.php');
-                    }, MESSAGE_DISPLAY_DURATION);
-                } else {
-                    showMessage('formMessage', data.message || 'Hiba történt a rögzítéskor.', 'danger');
+            .then(async (response) => {
+                const raw = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch {
+                    console.error('Raw response from app/process_entry.php:', raw);
+                    throw new Error('A szerver nem érvényes JSON-t küldött vissza.');
                 }
+                if (!response.ok || !data.success) {
+                    const msg = data?.message || `Hiba (${response.status})`;
+                    throw new Error(msg);
+                }
+                showMessage('formMessage', data.message || 'Sikeres rögzítés!', 'success');
+                setTimeout(() => loadPage('list.php'), MESSAGE_DISPLAY_DURATION);
             })
             .catch(error => {
                 showMessage('formMessage', `Hiba a rögzítés során: ${error.message}`, 'danger');
