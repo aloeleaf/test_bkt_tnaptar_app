@@ -107,11 +107,11 @@
                     ?>
                 </select>
             </div>
-            <div class="col-md-6"> <label for="alperes_terhelt" class="form-label">Alperes, terhelt</label>
+            <div class="col-md-6"> <label for="alperes_terhelt" class="form-label">Alperes, Terhelt</label>
                 <input type="text" class="form-control form-control-sm" id="alperes_terhelt" name="alperes_terhelt"
                     placeholder="Alperes, terhelt" title="Alperes, terhelt">
             </div>
-            <div class="col-md-6"> <label for="felperes_vadlo" class="form-label">Felperes, vádló</label>
+            <div class="col-md-6"> <label for="felperes_vadlo" class="form-label">Felperes, Vádló</label>
                 <input type="text" class="form-control form-control-sm" id="felperes_vadlo" name="felperes_vadlo"
                     placeholder="Felperes, vádló" title="Felperes, vádló">
             </div>
