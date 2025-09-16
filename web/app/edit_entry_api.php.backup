@@ -1,8 +1,4 @@
 <?php
-// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\edit_entry_api.php
-ob_start();
-ini_set('display_errors', '0');
-ini_set('log_errors', '1');
 header('Content-Type: application/json; charset=utf-8');
 
 $config = require __DIR__ . '/../config/config.php';
@@ -37,45 +33,26 @@ if ($method === 'GET') {
         if (!$entry) {
             respond(['success' => false, 'message' => 'A bejegyzés nem található.', 'data' => null], 404);
         }
-        
-        // Split subject into parts for backward compatibility
-        $subject_parts = explode("\n", $entry['subject'] ?? '', 2);
-        $entry['ugyminoseg'] = $subject_parts[0] ?? '';
-        $entry['intezkedes'] = $subject_parts[1] ?? '';
-        
+        $entry['ugyminoseg'] = $entry['subject'] ?? '';
         respond(['success' => true, 'message' => '', 'data' => $entry]);
     } catch (PDOException $e) {
         respond(['success' => false, 'message' => 'Adatbázis hiba: ' . $e->getMessage(), 'data' => null], 500);
     }
 } elseif ($method === 'POST') {
-    // Handle both legacy form (rogzites.php) and new edit form field names
-    $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
-    
-    // Try new edit form field names first, then fall back to legacy names
-    $birosag = trim($_POST['birosag'] ?? $_POST['court_name'] ?? '');
-    $tanacs = trim($_POST['tanacs'] ?? $_POST['council_name'] ?? '');
-    $date = trim($_POST['date'] ?? '');
-    $rooms = trim($_POST['rooms'] ?? $_POST['room_number'] ?? '');
-    $sorszam = trim($_POST['sorszam'] ?? '');
-    $start_input = trim($_POST['start_time'] ?? $_POST['ido'] ?? $_POST['kezd_ido'] ?? '');
-    $end_input_raw = trim($_POST['end_time'] ?? $_POST['befejez_ido'] ?? '');
-    $ugyszam = trim($_POST['ugyszam'] ?? '');
-    $persons = trim($_POST['resztvevok'] ?? $_POST['persons'] ?? '');
-    $letszam = trim($_POST['letszam'] ?? $_POST['azon'] ?? '');
-    $alperes_terhelt = trim($_POST['alperes_terhelt'] ?? '');
-    $felperes_vadlo = trim($_POST['felperes_vadlo'] ?? '');
-    
-    // Handle subject field - could be combined or separate
-    $subject_combined = trim($_POST['subject'] ?? '');
-    $ugyminoseg = trim($_POST['ugyminoseg'] ?? '');
-    $intezkedes = trim($_POST['intezkedes'] ?? '');
-    
-    // If combined subject is provided, use it; otherwise combine separate fields
-    if ($subject_combined) {
-        $final_subject = $subject_combined;
-    } else {
-        $final_subject = trim($ugyminoseg . "\n" . $intezkedes);
-    }
+    $id               = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
+    $birosag          = trim($_POST['court_name'] ?? '');
+    $tanacs           = trim($_POST['council_name'] ?? '');
+    $date             = trim($_POST['date'] ?? '');
+    $rooms            = trim($_POST['room_number'] ?? '');
+    $sorszam          = trim($_POST['sorszam'] ?? '');
+    $start_input      = trim($_POST['kezd_ido'] ?? '');
+    $end_input_raw    = trim($_POST['befejez_ido'] ?? '');
+    $ugyszam          = trim($_POST['ugyszam'] ?? '');
+    $persons          = trim($_POST['resztvevok'] ?? '');
+    $letszam          = trim($_POST['letszam'] ?? '');
+    $alperes_terhelt  = trim($_POST['alperes_terhelt'] ?? '');
+    $felperes_vadlo   = trim($_POST['felperes_vadlo'] ?? '');
+    $ugyminoseg       = trim($_POST['ugyminoseg'] ?? '');
 
     if ($id <= 0) {
         respond(['success' => false, 'message' => 'Hiányzó bejegyzés azonosító (id).', 'data' => null], 422);
@@ -84,26 +61,18 @@ if ($method === 'GET') {
         respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Ügyszám, Kezdési idő.', 'data' => null], 422);
     }
 
-    // Validate and process time fields
     $start_ts = DateTime::createFromFormat('H:i', $start_input);
-    if (!$start_ts) {
-        respond(['success' => false, 'message' => 'Érvénytelen kezdési időformátum (HH:MM).', 'data' => null], 422);
+    $end_eff  = ($end_input_raw !== '') ? $end_input_raw : '16:00';
+    $end_ts   = DateTime::createFromFormat('H:i', $end_eff);
+    if (!$start_ts || !$end_ts) {
+        respond(['success' => false, 'message' => 'Érvénytelen időformátum (HH:MM).', 'data' => null], 422);
     }
-    
-    $end_eff = ($end_input_raw !== '') ? $end_input_raw : '16:00';
-    $end_ts = DateTime::createFromFormat('H:i', $end_eff);
-    if (!$end_ts) {
-        respond(['success' => false, 'message' => 'Érvénytelen befejezési időformátum (HH:MM).', 'data' => null], 422);
-    }
-    
     if ($start_ts >= $end_ts) {
         respond(['success' => false, 'message' => 'A befejezési idő későbbi kell legyen, mint a kezdési idő.', 'data' => null], 422);
     }
-    
     $start_time_for_db = $start_ts->format('H:i:s');
-    $end_time_for_db = $end_ts->format('H:i:s');
+    $end_time_for_db   = $end_ts->format('H:i:s');
 
-    // Check for time conflicts
     try {
         $overlap = $pdo->prepare(
             'SELECT COUNT(*) FROM rooms
@@ -113,11 +82,11 @@ if ($method === 'GET') {
                AND id <> :id'
         );
         $overlap->execute([
-            ':room' => $rooms,
-            ':date' => $date,
+            ':room'       => $rooms,
+            ':date'       => $date,
             ':start_time' => $start_time_for_db,
-            ':end_time' => $end_time_for_db,
-            ':id' => $id
+            ':end_time'   => $end_time_for_db,
+            ':id'         => $id
         ]);
         if ((int)$overlap->fetchColumn() > 0) {
             respond(['success' => false, 'message' => 'Hiba: A módosított időpont ütközik egy másik foglalással.', 'data' => null], 409);
@@ -126,18 +95,16 @@ if ($method === 'GET') {
         respond(['success' => false, 'message' => 'Ütközésvizsgálat hiba: ' . $e->getMessage(), 'data' => null], 500);
     }
 
-    // Create foglalas summary
     $foglalas = trim(
         "Kezdés: " . $start_ts->format('H:i') . "\n" .
         "Befejezés: " . $end_ts->format('H:i') . "\n" .
         "Ügyszám: " . $ugyszam . "\n" .
         "Létszám: " . $letszam . "\n" .
-        "Tárgy: " . $final_subject . "\n" .
+        "Tárgy: " . $ugyminoseg . "\n" .
         "Alperes/Vádlott: " . $alperes_terhelt . "\n" .
         "Felperes/Vádló: " . $felperes_vadlo
     );
 
-    // Update the database
     try {
         $stmt = $pdo->prepare(
             'UPDATE rooms SET
@@ -158,30 +125,26 @@ if ($method === 'GET') {
              WHERE id = :id'
         );
         $ok = $stmt->execute([
-            ':birosag' => $birosag,
-            ':tanacs' => $tanacs,
-            ':date' => $date,
-            ':rooms' => $rooms,
-            ':sorszam' => $sorszam,
-            ':start_time' => $start_time_for_db,
-            ':end_time' => $end_time_for_db,
-            ':ugyszam' => $ugyszam,
-            ':persons' => $persons,
-            ':letszam' => $letszam,
+            ':birosag'         => $birosag,
+            ':tanacs'          => $tanacs,
+            ':date'            => $date,
+            ':rooms'           => $rooms,
+            ':sorszam'         => $sorszam,
+            ':start_time'      => $start_time_for_db,
+            ':end_time'        => $end_time_for_db,
+            ':ugyszam'         => $ugyszam,
+            ':persons'         => $persons,
+            ':letszam'         => $letszam,
             ':alperes_terhelt' => $alperes_terhelt,
-            ':felperes_vadlo' => $felperes_vadlo,
-            ':subject' => $final_subject,
-            ':foglalas' => $foglalas,
-            ':id' => $id
+            ':felperes_vadlo'  => $felperes_vadlo,
+            ':subject'         => $ugyminoseg,
+            ':foglalas'        => $foglalas,
+            ':id'              => $id
         ]);
-        
-        if ($ok && $stmt->rowCount() > 0) {
+        if ($ok) {
             respond(['success' => true, 'message' => 'A bejegyzés sikeresen frissítve!', 'data' => null]);
-        } elseif ($ok) {
-            respond(['success' => true, 'message' => 'Nincs változás az adatokban.', 'data' => null]);
-        } else {
-            respond(['success' => false, 'message' => 'Hiba történt a frissítés során.', 'data' => null], 500);
         }
+        respond(['success' => false, 'message' => 'Hiba történt a frissítés során.', 'data' => null], 500);
     } catch (PDOException $e) {
         respond(['success' => false, 'message' => 'Adatbázis hiba: ' . $e->getMessage(), 'data' => null], 500);
     }
