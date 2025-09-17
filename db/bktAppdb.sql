@@ -41,7 +41,6 @@ CREATE TABLE `rooms` (
   `start_time` time NOT NULL, -- Foglalás kezdési ideje
   `end_time` time NOT NULL DEFAULT '16:00:00', -- Foglalás befejezési ideje
   `rooms` varchar(255) NOT NULL, -- Tárgyaló azonosító
-  `sorszam` varchar(255) DEFAULT NULL, -- Sorszám vagy egyéb azonosító
   `ugyszam` varchar(255) NOT NULL, -- Ügyszám
   `subject` varchar(255) NOT NULL, -- Ügy tárgya vagy leírása
   `letszam` int(11) NOT NULL, -- Idézettek létszáma
@@ -80,8 +79,8 @@ INSERT INTO `settings` (`id`, `category`, `value`, `sort_order`, `active`) VALUE
 (23, 'birosag', 'Gödöllői Járásbíróság', 0, 1),
 (24, 'birosag', 'Szigetszentmiklósi Járásbíróság', 0, 1),
 (25, 'birosag', 'Ráckevei Járásbíróság', 0, 1),
-(31, 'resztvevok', 'Alperes - Terhelt', 0, 1),
-(32, 'resztvevok', 'Felperes - Vádló', 0, 1),
+(31, 'resztvevok', 'Alperes - Felperes', 0, 1),
+(32, 'resztvevok', 'Terhelt - Vádló', 0, 1),
 (38, 'room', 'BKT_A_01T', 0, 1),
 (39, 'room', 'BKT_A_02T', 0, 1),
 (40, 'room', 'BKT_A_03T', 0, 1),

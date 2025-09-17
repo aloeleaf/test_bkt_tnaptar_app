@@ -52,7 +52,6 @@ $filtered_entries = array_map(function ($row) {
         'council_name'   => $row['tanacs'] ?? '',
         'session_date'   => $row['date'] ?? '',
         'room_number'    => $row['rooms'] ?? '',
-        'sorszam'        => $row['sorszam'] ?? '',
         'kezd_ido'       => $formatted_start_time,
         'befejez_ido'    => $formatted_end_time,
         'ido'            => $formatted_start_time, // Backward compatibility
@@ -116,9 +115,6 @@ $filtered_entries = array_map(function ($row) {
                                 <div class="col-12 mb-2"><strong title="A tárgyalás helyszínéül szolgáló tárgyalóterem száma vagy neve.">Tárgyaló:</strong> <?= htmlspecialchars($data['room_number'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">
-                                <div class="col-12 mb-2"><strong title="A tárgyalás sorszáma az adott napon.">Sorszám:</strong> <?= htmlspecialchars($data['sorszam'] ?? 'N/A'); ?></div>
-                            </div>
-                             <div class="row">
                                 <div class="col-12 mb-2"><strong title="A tárgyalás kezdési időpontja.">Kezdés:</strong> <?= htmlspecialchars($data['kezd_ido'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">

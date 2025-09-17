@@ -59,7 +59,6 @@ try {
             'council_name'     => $row['tanacs'] ?? '',
             'session_date'     => $row['date'] ?? '',
             'room_number'      => $row['rooms'] ?? '',
-            'sorszam'          => $row['sorszam'] ?? '',
             'ido'              => $formatted_start_time, // For list.php compatibility
             'kezd_ido'         => $formatted_start_time, // For edit form
             'befejez_ido'      => $formatted_end_time,

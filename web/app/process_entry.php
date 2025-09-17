@@ -33,7 +33,6 @@ $ugyszam          = trim($_POST['ugyszam'] ?? '');
 $resztvevok       = trim($_POST['resztvevok'] ?? '');
 $letszamInput     = trim($_POST['letszam'] ?? '');
 $ugyminoseg       = trim($_POST['ugyminoseg'] ?? '');
-$sorszamInput     = trim($_POST['sorszam'] ?? '');
 $alperes_terhelt  = trim($_POST['alperes_terhelt'] ?? '');
 $felperes_vadlo   = trim($_POST['felperes_vadlo'] ?? '');
 
@@ -71,10 +70,6 @@ $end_time_for_db   = $endObj->format('H:i:s');
 $letszam = ($letszamInput === '') ? null : (filter_var($letszamInput, FILTER_VALIDATE_INT) !== false ? (int)$letszamInput : null);
 if ($letszamInput !== '' && $letszam === null) {
     respond(['success' => false, 'message' => 'A létszám csak szám lehet.'], 422);
-}
-$sorszam = ($sorszamInput === '') ? null : (filter_var($sorszamInput, FILTER_VALIDATE_INT) !== false ? (int)$sorszamInput : null);
-if ($sorszamInput !== '' && $sorszam === null) {
-    respond(['success' => false, 'message' => 'A sorszám csak szám lehet.'], 422);
 }
 
 // Overlap check
@@ -115,9 +110,9 @@ $foglalas = trim(
 try {
     $stmt = $pdo->prepare(
         "INSERT INTO `rooms`
-         (`birosag`, `tanacs`, `date`, `start_time`, `end_time`, `rooms`, `ugyszam`, `subject`, `letszam`, `resztvevok`, `sorszam`, `alperes_terhelt`, `felperes_vadlo`, `foglalas`)
+         (`birosag`, `tanacs`, `date`, `start_time`, `end_time`, `rooms`, `ugyszam`, `subject`, `letszam`, `resztvevok`, `alperes_terhelt`, `felperes_vadlo`, `foglalas`)
          VALUES
-         (:birosag, :tanacs, :date, :start_time, :end_time, :rooms, :ugyszam, :subject, :letszam, :resztvevok, :sorszam, :alperes_terhelt, :felperes_vadlo, :foglalas)"
+         (:birosag, :tanacs, :date, :start_time, :end_time, :rooms, :ugyszam, :subject, :letszam, :resztvevok, :alperes_terhelt, :felperes_vadlo, :foglalas)"
     );
     $stmt->execute([
         ':birosag'          => $birosag,
@@ -130,7 +125,6 @@ try {
         ':subject'          => $subject,
         ':letszam'          => $letszam,
         ':resztvevok'       => $resztvevok,
-        ':sorszam'          => $sorszam,
         ':alperes_terhelt'  => $alperes_terhelt,
         ':felperes_vadlo'   => $felperes_vadlo,
         ':foglalas'         => $foglalas

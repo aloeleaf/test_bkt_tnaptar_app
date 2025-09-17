@@ -85,46 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // // Funkció a szerkesztő űrlap dropdownjainak feltöltésére
-    // async function populateEditFormDropdowns() {
-    //     const dropdownsToFetch = {
-    //         editBirosag: 'birosag',
-    //         editTanacs: 'tanacs',
-    //         editRooms: 'room',          
-    //     };
-
-    //     for (const [selectId, type] of Object.entries(dropdownsToFetch)) {
-    //         const selectElement = document.getElementById(selectId);
-    //         if (!selectElement) continue;
-
-    //         // keep first "Válasszon..." option, clear the rest
-    //         while (selectElement.options.length > 1) {
-    //             selectElement.remove(1);
-    //         }
-
-    //         try {
-    //             const response = await fetch(`app/getItems.php?type=${encodeURIComponent(type)}`, { cache: 'no-store' });
-    //             const raw = await response.text();
-
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP ${response.status}: ${raw}`);
-    //             }
-
-    //             const data = JSON.parse(raw);
-
-    //             if (data.success && Array.isArray(data.data)) {
-    //                 data.data.forEach(item => {
-    //                     const option = document.createElement('option');
-    //                     option.value = item.value;
-    //                     option.textContent = item.value;
-    //                     selectElement.appendChild(option);
-    //                 });
-    //             }
-    //         } catch (err) {
-    //             console.error(`populateEditFormDropdowns: Hiba a(z) ${type} dropdown betöltésekor:`, err.message);
-    //         }
-    //     }
-    // }
     // Funkció a szerkesztő űrlap dropdownjainak feltöltésére
     async function populateEditFormDropdowns() {
         const dropdownsToFetch = {
@@ -338,46 +298,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // // Funkció a szerkesztő űrlap adatainak betöltésére
-    // async function loadEditFormData(entryId) {
-    //     try {
-    //         const response = await fetch(`app/get_list_data.php`);
-    //         const result = await response.json();
-
-    //         if (result.success) {
-    //             const entry = result.data.find(item => item.id == entryId);
-    //             if (entry) {
-    //                 // Populate form fields
-    //                 document.getElementById('editEntryId').value = entry.id;
-
-    //                 // Set dropdown values
-    //                 setSelectedOption(document.getElementById('editBirosag'), entry.court_name);
-    //                 setSelectedOption(document.getElementById('editTanacs'), entry.council_name);
-    //                 setSelectedOption(document.getElementById('editRooms'), entry.room_number);
-    //                 setSelectedOption(document.getElementById('editResztvevok'), entry.persons);
-
-    //                 // Set other field values
-    //                 document.getElementById('editDate').value = entry.session_date || '';
-    //                 document.getElementById('editSorszam').value = entry.sorszam || '';
-    //                 document.getElementById('editStartTime').value = entry.ido || '';
-    //                 document.getElementById('editEndTime').value = entry.befejez_ido || '';
-    //                 document.getElementById('editUgyszam').value = entry.ugyszam || '';
-    //                 document.getElementById('editAlperesTerhelt').value = entry.alperes_terhelt || '';
-    //                 document.getElementById('editFelperesVadlo').value = entry.felperes_vadlo || '';
-    //                 document.getElementById('editLetszam').value = entry.azon || '';
-    //                 document.getElementById('editSubject').value = (entry.ugyminoseg || '') + '\n' + (entry.intezkedes || '');
-    //             } else {
-    //                 throw new Error('Bejegyzés nem található');
-    //             }
-    //         } else {
-    //             throw new Error(result.message || 'Hiba az adatok betöltésekor');
-    //         }
-    //     } catch (error) {
-    //         console.error('Error loading entry data:', error);
-    //         showMessage('editMessage', 'Hiba az adatok betöltésekor: ' + error.message, 'danger');
-    //     }
-    // }
-
     // Funkció a szerkesztő űrlap adatainak betöltésére
     async function loadEditFormData(entryId) {
         try {
@@ -403,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Set other field values
                     document.getElementById('editDate').value = entry.session_date || '';
-                    document.getElementById('editSorszam').value = entry.sorszam || '';
                     document.getElementById('editStartTime').value = entry.ido || '';
                     document.getElementById('editEndTime').value = entry.befejez_ido || '';
                     document.getElementById('editUgyszam').value = entry.ugyszam || '';
@@ -442,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     setSelectedOption(document.getElementById('resztvevok'), entryData.resztvevok);
 
                     document.getElementById('date').value = entryData.date || '';
-                    document.getElementById('sorszam').value = entryData.sorszam || '';
                     document.getElementById('ido').value = entryData.start_time ? entryData.start_time.substring(0, 5) : '';
                     document.getElementById('ugyszam').value = entryData.ugyszam || '';
                     document.getElementById('letszam').value = entryData.letszam || '';

@@ -42,12 +42,12 @@
             </div>
         </div>
 
+
+        <hr class="my-4">
+
+        <h3 class="card-title mb-3">Tárgyalási Részletek</h3>
+
         <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <label for="date" class="form-label">Dátum</label>
-                <input type="date" class="form-control form-control-sm" id="date" name="date" required
-                    title="A tárgyalás dátuma.">
-            </div>
             <div class="col-md-6">
                 <label for="room_number" class="form-label">Tárgyaló</label>
                 <select class="form-select form-select-sm" id="room_number" name="room_number" required
@@ -63,17 +63,18 @@
                     ?>
                 </select>
             </div>
+            <div class="col-md-6"> <label for="ugyszam" class="form-label">Ügyszám</label>
+                <input type="text" class="form-control form-control-sm" id="ugyszam" name="ugyszam"
+                    placeholder="Ügyszám (pl. P.2023/2023)" required title="A tárgyalás ügyazonosító száma.">
+            </div>
         </div>
 
-        <hr class="my-4">
-
-        <h3 class="card-title mb-3">Tárgyalási Részletek</h3>
 
         <div class="row g-3 align-items-end mb-4">
-            <div class="col-md-2">
-                <label for="sorszam" class="form-label">Sorszám</label>
-                <input type="text" class="form-control form-control-sm" id="sorszam" name="sorszam" value="1"
-                    title="A tárgyalás sorszáma az adott napon.">
+            <div class="col-md-4">
+                <label for="date" class="form-label">Dátum</label>
+                <input type="date" class="form-control form-control-sm" id="date" name="date" required
+                    title="A tárgyalás dátuma.">
             </div>
             <div class="col-md-4">
                 <label for="kezd_ido" class="form-label">Kezdési időpont:</label>
@@ -85,10 +86,7 @@
                 <input type="time" class="form-control form-control-sm" id="befejez_ido" name="befejez_ido"
                     placeholder="Befejezés időpontja (pl. 16:00)" required title="A tárgyalás befejezési időpontja.">
             </div>
-            <div class="col-md-6"> <label for="ugyszam" class="form-label">Ügyszám</label>
-                <input type="text" class="form-control form-control-sm" id="ugyszam" name="ugyszam"
-                    placeholder="Ügyszám (pl. P.2023/2023)" required title="A tárgyalás ügyazonosító száma.">
-            </div>
+
         </div>
 
         <div class="row g-3 mb-4">
@@ -107,6 +105,10 @@
                     ?>
                 </select>
             </div>
+            <div class="col-md-6"> <label for="letszam" class="form-label">Idézettek száma.</label>
+                <input type="text" class="form-control form-control-sm" id="letszam" name="letszam"
+                    placeholder="Idézettek száma. (pl. 2)" title="Az idézettek száma.">
+            </div>
             <div class="col-md-6"> <label for="alperes_terhelt" class="form-label">Alperes, Terhelt</label>
                 <input type="text" class="form-control form-control-sm" id="alperes_terhelt" name="alperes_terhelt"
                     placeholder="Alperes, terhelt" title="Alperes, terhelt">
@@ -115,10 +117,7 @@
                 <input type="text" class="form-control form-control-sm" id="felperes_vadlo" name="felperes_vadlo"
                     placeholder="Felperes, vádló" title="Felperes, vádló">
             </div>
-            <div class="col-md-6"> <label for="letszam" class="form-label">Idézettek száma.</label>
-                <input type="text" class="form-control form-control-sm" id="letszam" name="letszam"
-                    placeholder="Idézettek száma. (pl. 2)" title="Az idézettek száma.">
-            </div>
+
         </div>
 
         <div class="row g-3 mb-4">

@@ -38,10 +38,6 @@
                     <option value="">Válasszon tárgyalót...</option>
                 </select>
             </div>
-            <div class="col-md-4 mb-3">
-                <label for="editSorszam" class="form-label">Sorszám:</label>
-                <input type="text" class="form-control" id="editSorszam" name="sorszam">
-            </div>
         </div>
 
         <div class="row">

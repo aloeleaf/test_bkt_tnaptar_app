@@ -56,7 +56,6 @@ if ($method === 'GET') {
     $tanacs = trim($_POST['tanacs'] ?? $_POST['council_name'] ?? '');
     $date = trim($_POST['date'] ?? '');
     $rooms = trim($_POST['rooms'] ?? $_POST['room_number'] ?? '');
-    $sorszam = trim($_POST['sorszam'] ?? '');
     $start_input = trim($_POST['start_time'] ?? $_POST['ido'] ?? $_POST['kezd_ido'] ?? '');
     $end_input_raw = trim($_POST['end_time'] ?? $_POST['befejez_ido'] ?? '');
     $ugyszam = trim($_POST['ugyszam'] ?? '');
@@ -145,7 +144,6 @@ if ($method === 'GET') {
                 tanacs = :tanacs,
                 date = :date,
                 rooms = :rooms,
-                sorszam = :sorszam,
                 start_time = :start_time,
                 end_time = :end_time,
                 ugyszam = :ugyszam,
@@ -162,7 +160,6 @@ if ($method === 'GET') {
             ':tanacs' => $tanacs,
             ':date' => $date,
             ':rooms' => $rooms,
-            ':sorszam' => $sorszam,
             ':start_time' => $start_time_for_db,
             ':end_time' => $end_time_for_db,
             ':ugyszam' => $ugyszam,
