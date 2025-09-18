@@ -3,7 +3,7 @@
 // This file contains only HTML for AJAX loading
 ?>
 <div class="container mt-5">
-    <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási Bejegyzés Szerkesztése</h1>
+    <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptár szerkesztése</h1>
 
     <!-- Az üzenetek megjelenítésére szolgáló div. A JavaScript fogja feltölteni. -->
     <div id="editMessage" class="alert d-none" role="alert"></div>

@@ -1,7 +1,7 @@
-<h2 class="mb-4 text-center">Új Tárgyalási Bejegyzés Rögzítése</h2>
+<h2 class="mb-4 text-center">Új tárgyalási naptár időpont rögzítése</h2>
 
 <div class="card p-4 shadow-sm">
-    <h3 class="card-title mb-4  text-dark">Tárgyalási Bejegyzés Adatai</h3>
+    <h3 class="card-title mb-4  text-dark">Tárgyalási adatai</h3>
     <div id="formMessage" class="alert d-none" role="alert"></div>
 
     <form id="jegyzekForm">

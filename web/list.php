@@ -67,7 +67,7 @@ $filtered_entries = array_map(function ($row) {
 ?>
 
 <div class="container mt-5">
-    <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási Bejegyzések Listája</h1>
+    <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptar lista</h1>
 
     <div class="row mb-4 align-items-center">
         <div class="col-md-7">
