@@ -21,7 +21,7 @@ require_once __DIR__ . '/includes/header.php';
     </form>
     </div>
   <title><?= htmlspecialchars($page_title) ?></title>
-    <script src="<?= $base_url ?>/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
