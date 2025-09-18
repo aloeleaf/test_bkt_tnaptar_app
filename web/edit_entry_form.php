@@ -68,7 +68,7 @@
                 <div class="form-text">A tárgyalásban résztvevő felek minősége.</div>
             </div>
             <div class="col-md-6">
-                <label for="editLetszam" class="form-label">Id. (Létszám):</label>
+                <label for="editLetszam" class="form-label">Idézettek száma:</label>
                 <input type="number" class="form-control" id="editLetszam" name="letszam" min="1">
             </div>
         </div>
