@@ -90,37 +90,40 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropdownsToFetch = {
             editBirosag: 'birosag',
             editTanacs: 'tanacs',
-            editRooms: 'room'
-            // Remove editResztvevok since it's now a text input, not a dropdown
+            editRooms: 'room',
+            editResztvevok: 'resztvevok'
         };
 
+        console.log('populateEditFormDropdowns called with:', Object.keys(dropdownsToFetch)); // Debug
+
         for (const [selectId, type] of Object.entries(dropdownsToFetch)) {
+            console.log(`Processing dropdown: ${selectId} -> ${type}`); // Debug
+
             const selectElement = document.getElementById(selectId);
+
             if (!selectElement) {
-                console.warn(`populateEditFormDropdowns: Select element ${selectId} not found`);
+                console.error(`Element with ID '${selectId}' not found!`);
                 continue;
             }
 
-            // Check if it's actually a select element
+            console.log(`Found element ${selectId}:`, selectElement); // Debug
+
             if (selectElement.tagName !== 'SELECT') {
-                console.warn(`populateEditFormDropdowns: Element ${selectId} is not a select element`);
+                console.error(`Element ${selectId} is not a SELECT element, it's ${selectElement.tagName}`);
                 continue;
             }
 
-            // keep first "Válasszon..." option, clear the rest
+            // Clear existing options except first
             while (selectElement.options.length > 1) {
                 selectElement.remove(1);
             }
 
             try {
+                console.log(`Fetching data for ${type}...`); // Debug
                 const response = await fetch(`app/getItems.php?type=${encodeURIComponent(type)}`, { cache: 'no-store' });
-                const raw = await response.text();
+                const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${raw}`);
-                }
-
-                const data = JSON.parse(raw);
+                console.log(`Response for ${type}:`, data); // Debug
 
                 if (data.success && Array.isArray(data.data)) {
                     data.data.forEach(item => {
@@ -129,13 +132,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.textContent = item.value;
                         selectElement.appendChild(option);
                     });
+                    console.log(`Successfully populated ${selectId} with ${data.data.length} options`);
+                } else {
+                    console.error(`Invalid data for ${type}:`, data);
                 }
             } catch (err) {
-                console.error(`populateEditFormDropdowns: Hiba a(z) ${type} dropdown betöltésekor:`, err.message);
+                console.error(`Error fetching ${type}:`, err);
             }
         }
     }
-
 
     // Funkció a kereső inicializálására és a DOM átrendezésére
     function initSearch() {
@@ -267,13 +272,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Funkció a szerkesztő űrlap betöltésére
     async function loadEditForm(entryId) {
         try {
+            console.log('Loading edit form for entry ID:', entryId); // Debug
+
             const response = await fetch('edit_entry_form.php');
             const html = await response.text();
-
             contentArea.innerHTML = html;
 
+            // Check if the element exists after loading HTML
+            const editResztvevokElement = document.getElementById('editResztvevok');
+            console.log('editResztvevok element after HTML load:', editResztvevokElement);
+
             // Populate dropdowns first
+            console.log('Starting populateEditFormDropdowns...');
             await populateEditFormDropdowns();
+            console.log('Finished populateEditFormDropdowns');
 
             // Then load entry data
             await loadEditFormData(entryId);
@@ -298,49 +310,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
     // Funkció a szerkesztő űrlap adatainak betöltésére
-    async function loadEditFormData(entryId) {
-        try {
-            const response = await fetch(`app/get_list_data.php`);
-            const result = await response.json();
+async function loadEditFormData(entryId) {
+    try {
+        const response = await fetch(`app/get_list_data.php`);
+        const result = await response.json();
 
-            if (result.success) {
-                const entry = result.data.find(item => item.id == entryId);
-                if (entry) {
-                    // Populate form fields
-                    document.getElementById('editEntryId').value = entry.id;
+        if (result.success) {
+            const entry = result.data.find(item => item.id == entryId);
+            if (entry) {
+                console.log('Entry data:', entry); // Debug log
+                console.log('Entry persons value:', entry.persons); // This is the correct field!
 
-                    // Set dropdown values
-                    setSelectedOption(document.getElementById('editBirosag'), entry.court_name);
-                    setSelectedOption(document.getElementById('editTanacs'), entry.council_name);
-                    setSelectedOption(document.getElementById('editRooms'), entry.room_number);
+                // Populate form fields
+                document.getElementById('editEntryId').value = entry.id;
 
-                    // Set text input for résztvevők (not dropdown anymore)
-                    const resztvevokInput = document.getElementById('editResztvevok');
-                    if (resztvevokInput) {
-                        resztvevokInput.value = entry.persons || '';
-                    }
+                // Set dropdown values - USE entry.persons (not entry.resztvevok)
+                setSelectedOption(document.getElementById('editBirosag'), entry.court_name);
+                setSelectedOption(document.getElementById('editTanacs'), entry.council_name);
+                setSelectedOption(document.getElementById('editRooms'), entry.room_number);
+                setSelectedOption(document.getElementById('editResztvevok'), entry.persons); // Fixed!
 
-                    // Set other field values
-                    document.getElementById('editDate').value = entry.session_date || '';
-                    document.getElementById('editStartTime').value = entry.ido || '';
-                    document.getElementById('editEndTime').value = entry.befejez_ido || '';
-                    document.getElementById('editUgyszam').value = entry.ugyszam || '';
-                    document.getElementById('editAlperesTerhelt').value = entry.alperes_terhelt || '';
-                    document.getElementById('editFelperesVadlo').value = entry.felperes_vadlo || '';
-                    document.getElementById('editLetszam').value = entry.azon || '';
-                    document.getElementById('editSubject').value = (entry.ugyminoseg || '') + '\n' + (entry.intezkedes || '');
-                } else {
-                    throw new Error('Bejegyzés nem található');
-                }
+                // Set other field values
+                document.getElementById('editDate').value = entry.session_date || '';
+                document.getElementById('editStartTime').value = entry.ido || '';
+                document.getElementById('editEndTime').value = entry.befejez_ido || '';
+                document.getElementById('editUgyszam').value = entry.ugyszam || '';
+                document.getElementById('editAlperesTerhelt').value = entry.alperes_terhelt || '';
+                document.getElementById('editFelperesVadlo').value = entry.felperes_vadlo || '';
+                document.getElementById('editLetszam').value = entry.azon || '';
+                document.getElementById('editSubject').value = (entry.ugyminoseg || '') + '\n' + (entry.intezkedes || '');
             } else {
-                throw new Error(result.message || 'Hiba az adatok betöltésekor');
+                throw new Error('Bejegyzés nem található');
             }
-        } catch (error) {
-            console.error('Error loading entry data:', error);
-            showMessage('editMessage', 'Hiba az adatok betöltésekor: ' + error.message, 'danger');
+        } else {
+            throw new Error(result.message || 'Hiba az adatok betöltésekor');
         }
+    } catch (error) {
+        console.error('Error loading entry data:', error);
+        showMessage('editMessage', 'Hiba az adatok betöltésekor: ' + error.message, 'danger');
     }
+}
 
     // Funkció a szerkesztő űrlap adatainak betöltésére és kezelésére (legacy - rogzites.php-hoz)
     function loadEditData(id) {
