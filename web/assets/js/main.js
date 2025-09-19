@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             const formTitle = contentArea.querySelector('h2');
                             if (formTitle) {
-                                formTitle.textContent = 'Új Tárgyalási Bejegyzés Rögzítése';
+                                formTitle.textContent = 'Új tárgyalási naptár bejegyzés';
                             }
                             const submitBtn = document.getElementById('jegyzekFormSubmitBtn');
                             if (submitBtn) {
