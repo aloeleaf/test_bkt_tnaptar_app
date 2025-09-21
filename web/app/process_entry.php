@@ -96,22 +96,32 @@ try {
 
 // Summarys
 $subject  = $ugyminoseg;
-$foglalas = sprintf(
-    "Ügyszám: %s<br>".
-    "Időpont: %s - %s<br>".
-    "Létszám: %s<br>".
-    "Alperes/Vádlott: %s<br>".
-    "Felperes/Vádló: %s<br>".
-    "Tárgy: %s<br>".
-    "<div style='border-bottom: 2px solid #16000081; margin: 8px 0; width: 100%%;'></div>",
-    $ugyszam,
-    $startObj->format('H:i'),
-    $endObj->format('H:i'),
-    $letszam ?? '',
-    $alperes_terhelt,
-    $felperes_vadlo,
-    $subject
+$foglalas = trim(
+    "Kezdés: {$startObj->format('H:i')}\n" .
+    "Befejezés: {$endObj->format('H:i')}\n" .
+    "Ügyszám: {$ugyszam}\n" .
+    "Létszám: " . ($letszam ?? '') . "\n" .
+    "Tárgy: {$subject}\n" .
+    "Alperes/Vádlott: {$alperes_terhelt}\n" .
+    "Felperes/Vádló: {$felperes_vadlo}"
 );
+
+// $foglalas = sprintf(
+//     "Ügyszám: %s<br>".
+//     "Időpont: %s - %s<br>".
+//     "Létszám: %s<br>".
+//     "Alperes/Vádlott: %s<br>".
+//     "Felperes/Vádló: %s<br>".
+//     "Tárgy: %s<br>".
+//     "<div style='border-bottom: 2px solid #16000081; margin: 8px 0; width: 100%%;'></div>",
+//     $ugyszam,
+//     $startObj->format('H:i'),
+//     $endObj->format('H:i'),
+//     $letszam ?? '',
+//     $alperes_terhelt,
+//     $felperes_vadlo,
+//     $subject
+// );
 
 // Insert
 try {
