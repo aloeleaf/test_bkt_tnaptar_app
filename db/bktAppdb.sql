@@ -519,6 +519,139 @@ INSERT INTO `settings` (`id`, `category`, `value`, `sort_order`, `active`) VALUE
 (575, 'tanacs', 'Redlné dr. Mészáros Ildikó', 0, 1);
 
 
+-- --------------------------------------------------------
+--
+-- DINAMIKUS NÉZETEK (VIEWS)
+-- Tárgyaló naptár megjelenítéshez dinamikusan generált nézetek
+--
+
+-- Dinamikus view létrehozása a tárgyaló naptárhoz
+SET @sql = NULL;
+SELECT
+  GROUP_CONCAT(DISTINCT
+    CONCAT(
+      'MAX(CASE WHEN r.rooms = ''', value, ''' THEN CONCAT(',
+      'DATE_FORMAT(r.start_time, ''%H:%i''), '' - '', ',
+      'DATE_FORMAT(r.end_time, ''%H:%i''), ''\\n'', ',
+      '''Ügyszám: '', r.ugyszam, ''\\n'', ',
+      '''Tárgy: '', SUBSTRING(r.subject, 1, 50), ',
+      'CASE WHEN LENGTH(r.subject) > 50 THEN ''...'' ELSE '''' END, ',
+      '''\\nLétszám: '', COALESCE(r.letszam, ''''), ',
+      '''\\nAlperes: '', COALESCE(r.alperes_terhelt, ''''), ',
+      '''\\nFelperes: '', COALESCE(r.felperes_vadlo, '''') ',
+      ') END) AS `', value, '`'
+    )
+  ) INTO @sql
+FROM settings 
+WHERE category = 'room' AND active = 1;
+
+-- Alapértelmezett view létrehozása ha még nincs adat
+SET @sql = COALESCE(@sql, 'NULL as placeholder');
+
+-- Tágyaló naptár view létrehozása
+SET @sql = CONCAT('CREATE OR REPLACE VIEW room_schedule_view AS SELECT 
+    r.date,
+    CASE 
+        WHEN DAYNAME(r.date) = ''Monday'' THEN ''Hétfő''
+        WHEN DAYNAME(r.date) = ''Tuesday'' THEN ''Kedd''
+        WHEN DAYNAME(r.date) = ''Wednesday'' THEN ''Szerda''
+        WHEN DAYNAME(r.date) = ''Thursday'' THEN ''Csütörtök''
+        WHEN DAYNAME(r.date) = ''Friday'' THEN ''Péntek''
+        WHEN DAYNAME(r.date) = ''Saturday'' THEN ''Szombat''
+        WHEN DAYNAME(r.date) = ''Sunday'' THEN ''Vasárnap''
+    END as hungarian_day,
+    ', @sql, ',
+    COUNT(r.id) as total_bookings,
+    MIN(r.start_time) as first_booking,
+    MAX(r.end_time) as last_booking,
+    GROUP_CONCAT(DISTINCT r.birosag SEPARATOR '', '') as courts,
+    GROUP_CONCAT(DISTINCT r.tanacs SEPARATOR '', '') as councils
+FROM rooms r
+WHERE r.date >= CURDATE() AND r.date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+GROUP BY r.date
+ORDER BY r.date');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- SuperSign CMS kompatibilis view HTML formátummal
+SET @sql_html = NULL;
+SELECT
+  GROUP_CONCAT(DISTINCT
+    CONCAT(
+      'MAX(CASE WHEN r.rooms = ''', value, ''' THEN CONCAT(',
+      '''<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 5px; margin: 5px 0; font-family: Arial;">'', ',
+      '''<div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">'', ',
+      'DATE_FORMAT(r.start_time, ''%H:%i''), '' - '', DATE_FORMAT(r.end_time, ''%H:%i''), ',
+      '''</div>'', ',
+      '''<div style="font-size: 14px; margin-bottom: 3px;">Ügyszám: '', r.ugyszam, ''</div>'', ',
+      '''<div style="font-size: 12px; font-style: italic;">'', SUBSTRING(r.subject, 1, 35), ',
+      'CASE WHEN LENGTH(r.subject) > 35 THEN ''...'' ELSE '''' END, ''</div>'', ',
+      '''</div>''',
+      ') END) AS `', value, '`'
+    )
+  ) INTO @sql_html
+FROM settings 
+WHERE category = 'room' AND active = 1;
+
+SET @sql_html = COALESCE(@sql_html, 'NULL as placeholder');
+
+SET @sql_html = CONCAT('CREATE OR REPLACE VIEW supersign_schedule_view AS SELECT 
+    r.date,
+    CASE 
+        WHEN DAYNAME(r.date) = ''Monday'' THEN ''Hétfő''
+        WHEN DAYNAME(r.date) = ''Tuesday'' THEN ''Kedd''
+        WHEN DAYNAME(r.date) = ''Wednesday'' THEN ''Szerda''
+        WHEN DAYNAME(r.date) = ''Thursday'' THEN ''Csütörtök''
+        WHEN DAYNAME(r.date) = ''Friday'' THEN ''Péntek''
+        WHEN DAYNAME(r.date) = ''Saturday'' THEN ''Szombat''
+        WHEN DAYNAME(r.date) = ''Sunday'' THEN ''Vasárnap''
+    END as hungarian_day,
+    ', @sql_html, '
+FROM rooms r
+WHERE r.date >= CURDATE() AND r.date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+GROUP BY r.date
+ORDER BY r.date');
+
+PREPARE stmt FROM @sql_html;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Stored procedure a view-k frissítéséhez
+DELIMITER //
+
+CREATE PROCEDURE RefreshRoomViews()
+BEGIN
+    -- Törli és újra létrehozza a dinamikus view-kat
+    DROP VIEW IF EXISTS room_schedule_view;
+    DROP VIEW IF EXISTS supersign_schedule_view;
+    
+    -- Újra futtatja a dinamikus view generálást
+    SET @sql = NULL;
+    SELECT GROUP_CONCAT(DISTINCT
+        CONCAT('MAX(CASE WHEN r.rooms = ''', value, ''' THEN CONCAT(DATE_FORMAT(r.start_time, ''%H:%i''), '' - '', DATE_FORMAT(r.end_time, ''%H:%i''), ''\\n'', r.ugyszam, ''\\n'', SUBSTRING(r.subject, 1, 50)) END) AS `', value, '`')
+    ) INTO @sql FROM settings WHERE category = 'room' AND active = 1;
+    
+    SET @sql = COALESCE(@sql, 'NULL as placeholder');
+    SET @sql = CONCAT('CREATE VIEW room_schedule_view AS SELECT r.date, ', @sql, ', COUNT(*) as total_bookings FROM rooms r WHERE r.date >= CURDATE() GROUP BY r.date ORDER BY r.date');
+    
+    SET @query = @sql;
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END//
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Indexek a kiírt táblákhoz
+-- Az elsődleges kulcsok beállítása a táblákhoz.
+--
+
+
 --
 -- Indexek a kiírt táblákhoz
 -- Az elsődleges kulcsok beállítása a táblákhoz.
