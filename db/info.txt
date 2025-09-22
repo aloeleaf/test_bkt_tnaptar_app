@@ -1,1 +1,3 @@
 docker compose exec -T db mariadb -uroot -pp1ssw2rd bktAppdb < ./db/bktAppdb.sql
+
+docker compose exec -T db mariadb -uroot -pp1ssw2rd -e "DROP DATABASE IF EXISTS bktAppdb;" && docker compose exec -T db mariadb -uroot -pp1ssw2rd < db/bktAppdb.sql
