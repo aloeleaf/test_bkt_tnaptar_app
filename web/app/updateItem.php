@@ -16,7 +16,7 @@ try {
 
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     $type = $input['type'] ?? $_POST['type'] ?? null;
     $id = $input['id'] ?? $_POST['id'] ?? null;
     $value = $input['value'] ?? $_POST['value'] ?? null;
@@ -24,12 +24,12 @@ try {
     if (!$type) {
         throw new Exception('Nincs megadva a kért elem típusa.');
     }
-    
+
     if (!$id || !is_numeric($id)) {
         throw new Exception('Nincs megadva érvényes elem azonosító.');
     }
 
-    if (!$value || trim($value) === '') {
+    if ($value === null || trim($value) === '') {
         throw new Exception('Nincs megadva az új érték.');
     }
 
@@ -44,7 +44,7 @@ try {
     // Check if new value already exists (except for current item)
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE category = :category AND value = :value AND id != :id");
     $stmt->execute([':category' => $type, ':value' => $value, ':id' => (int)$id]);
-    
+
     if ($stmt->fetchColumn() > 0) {
         throw new Exception('Ez az érték már létezik másik elemnél.');
     }

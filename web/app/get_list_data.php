@@ -35,7 +35,7 @@ try {
     $sqlOrderClause = $orderOptions[$orderBy];
 
     // Adatok lekérése az elmúlt 4 hétből a kiválasztott rendezés szerint
-    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE date >= CURDATE() - INTERVAL 28 DAY ORDER BY " . $sqlOrderClause);
+    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE date >= CURRENT_DATE - INTERVAL '28 days' ORDER BY " . $sqlOrderClause);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -48,28 +48,28 @@ try {
         // Befejezési idő formázása
         $end_time = $row['end_time'] ?? '';
         $formatted_end_time = $end_time ? substr($end_time, 0, 5) : '';
-        
+
         // Split subject into parts for backward compatibility
         $subject_parts = explode("\n", $row['subject'] ?? '');
-        
+
         // Konzisztens mezőnevek használata
         return [
-            'id'               => $row['id'] ?? '',
-            'court_name'       => $row['birosag'] ?? '',
-            'council_name'     => $row['tanacs'] ?? '',
-            'session_date'     => $row['date'] ?? '',
-            'room_number'      => $row['rooms'] ?? '',
-            'ido'              => $formatted_start_time, // For list.php compatibility
-            'kezd_ido'         => $formatted_start_time, // For edit form
-            'befejez_ido'      => $formatted_end_time,
-            'ugyszam'          => $row['ugyszam'] ?? '',
-            'persons'          => $row['resztvevok'] ?? '',
-            'azon'             => $row['letszam'] ?? '', 
-            'ugyminoseg'       => $subject_parts[0] ?? '', // First line of subject
-            'intezkedes'       => $subject_parts[1] ?? '', // Second line of subject
-            'subject'          => $row['subject'] ?? '',   // Full subject for edit form
-            'alperes_terhelt'  => $row['alperes_terhelt'] ?? '',
-            'felperes_vadlo'   => $row['felperes_vadlo'] ?? '',
+            'id' => $row['id'] ?? '',
+            'court_name' => $row['birosag'] ?? '',
+            'council_name' => $row['tanacs'] ?? '',
+            'session_date' => $row['date'] ?? '',
+            'room_number' => $row['rooms'] ?? '',
+            'ido' => $formatted_start_time, // For list.php compatibility
+            'kezd_ido' => $formatted_start_time, // For edit form
+            'befejez_ido' => $formatted_end_time,
+            'ugyszam' => $row['ugyszam'] ?? '',
+            'persons' => $row['resztvevok'] ?? '',
+            'azon' => $row['letszam'] ?? '',
+            'ugyminoseg' => $subject_parts[0] ?? '', // First line of subject
+            'intezkedes' => $subject_parts[1] ?? '', // Second line of subject
+            'subject' => $row['subject'] ?? '',   // Full subject for edit form
+            'alperes_terhelt' => $row['alperes_terhelt'] ?? '',
+            'felperes_vadlo' => $row['felperes_vadlo'] ?? '',
         ];
     }, $rows);
 
@@ -85,5 +85,7 @@ try {
 }
 
 // Clear any unwanted output before JSON
-while (ob_get_level() > 0) { ob_end_clean(); }
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);

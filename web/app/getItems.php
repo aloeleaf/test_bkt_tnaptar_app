@@ -19,7 +19,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT id, value
         FROM settings
-        WHERE category = :category AND active = 1
+        WHERE category = :category AND active = TRUE
         ORDER BY sort_order ASC, value ASC
     ");
     $stmt->execute([':category' => $type]);

@@ -7,7 +7,6 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 header('Content-Type: application/json; charset=utf-8');
 
-
 function respond(array $payload, int $code = 200): void {
     http_response_code($code);
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -41,7 +40,6 @@ if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $s
     respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők.'], 422);
 }
 
-
 // Validate date
 $dateObj = DateTime::createFromFormat('Y-m-d', $dateInput);
 $dtErr = DateTime::getLastErrors();
@@ -51,7 +49,6 @@ if (!$dateObj || $warnCount > 0 || $errCount > 0) {
     respond(['success' => false, 'message' => 'Érvénytelen dátum formátum (YYYY-MM-DD).'], 422);
 }
 $dateForDb = $dateObj->format('Y-m-d');
-
 
 // Times
 $startObj = DateTime::createFromFormat('H:i', $startInput);
@@ -75,11 +72,11 @@ if ($letszamInput !== '' && $letszam === null) {
 // Overlap check
 try {
     $overlap_stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM `rooms`
-         WHERE `rooms` = :room
-           AND `date` = :date
-           AND `start_time` < :end_time
-           AND `end_time` > :start_time"
+        "SELECT COUNT(*) FROM rooms
+         WHERE rooms = :room
+           AND date = :date
+           AND start_time < :end_time
+           AND end_time > :start_time"
     );
     $overlap_stmt->execute([
         ':room'       => $room,
@@ -106,28 +103,11 @@ $foglalas = trim(
     "Felperes/Vádló: {$felperes_vadlo}"
 );
 
-// $foglalas = sprintf(
-//     "Ügyszám: %s<br>".
-//     "Időpont: %s - %s<br>".
-//     "Létszám: %s<br>".
-//     "Alperes/Vádlott: %s<br>".
-//     "Felperes/Vádló: %s<br>".
-//     "Tárgy: %s<br>".
-//     "<div style='border-bottom: 2px solid #16000081; margin: 8px 0; width: 100%%;'></div>",
-//     $ugyszam,
-//     $startObj->format('H:i'),
-//     $endObj->format('H:i'),
-//     $letszam ?? '',
-//     $alperes_terhelt,
-//     $felperes_vadlo,
-//     $subject
-// );
-
 // Insert
 try {
     $stmt = $pdo->prepare(
-        "INSERT INTO `rooms`
-         (`birosag`, `tanacs`, `date`, `start_time`, `end_time`, `rooms`, `ugyszam`, `subject`, `letszam`, `resztvevok`, `alperes_terhelt`, `felperes_vadlo`, `foglalas`)
+        "INSERT INTO rooms
+         (birosag, tanacs, date, start_time, end_time, rooms, ugyszam, subject, letszam, resztvevok, alperes_terhelt, felperes_vadlo, foglalas)
          VALUES
          (:birosag, :tanacs, :date, :start_time, :end_time, :rooms, :ugyszam, :subject, :letszam, :resztvevok, :alperes_terhelt, :felperes_vadlo, :foglalas)"
     );

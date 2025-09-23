@@ -7,15 +7,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-class Auth {
+class Auth
+{
     private $config;
     private $pdo;
 
-    public function __construct($config) {
+    public function __construct($config)
+    {
         $this->config = $config;
-        // Use standardized config keys to match Database.php
+        // Use PostgreSQL DSN
         $this->pdo = new PDO(
-            "mysql:host={$config['host']};dbname={$config['dbname']};charset=utf8mb4",
+            "pgsql:host={$config['host']};port={$config['port']};dbname={$config['dbname']}",
             $config['user'],
             $config['password']
         );
@@ -23,7 +25,8 @@ class Auth {
         date_default_timezone_set('Europe/Budapest');
     }
 
-    public function login($username, $password) {
+    public function login($username, $password)
+    {
         // Prevent empty credentials from attempting an anonymous bind
         if (empty($username) || empty($password)) {
             return "Hibás felhasználónév vagy jelszó.";
@@ -58,7 +61,8 @@ class Auth {
             if ($entries['count'] > 0 && isset($entries[0]['memberof'])) {
                 $userGroups = [];
                 foreach ($entries[0]['memberof'] as $groupDn) {
-                    if (!is_string($groupDn)) continue;
+                    if (!is_string($groupDn))
+                        continue;
                     if (preg_match('/CN=([^,]+)/i', $groupDn, $matches)) {
                         $userGroups[] = $matches[1];
                     }
@@ -82,7 +86,8 @@ class Auth {
                     $_SESSION['groups'] = $userGroups;
 
                     $stmt = $this->pdo->prepare(
-                        "INSERT INTO name (name, last_login) VALUES (:name, :last_login) ON DUPLICATE KEY UPDATE last_login = :last_login"
+                        "INSERT INTO name (name, last_login) VALUES (:name, :last_login)
+                        ON CONFLICT (name) DO UPDATE SET last_login = EXCLUDED.last_login"
                     );
                     $stmt->execute([
                         ':name' => $displayName,
@@ -95,18 +100,20 @@ class Auth {
             }
             return "Felhasználói adatok nem találhatók vagy a felhasználó nem tagja egyetlen csoportnak sem.";
         }
-        
+
         if ($conn) {
             ldap_close($conn);
         }
         return "Hibás felhasználónév vagy jelszó, vagy nem elérhető az LDAP szerver.";
     }
 
-    public static function isAuthenticated() {
+    public static function isAuthenticated()
+    {
         return isset($_SESSION['user']);
     }
 
-    public static function logout() {
+    public static function logout()
+    {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -115,9 +122,14 @@ class Auth {
 
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000,
-                $params["path"], $params["domain"],
-                $params["secure"], $params["httponly"]
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params["path"],
+                $params["domain"],
+                $params["secure"],
+                $params["httponly"]
             );
         }
 

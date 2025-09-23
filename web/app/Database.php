@@ -1,5 +1,5 @@
 <?php
-// app/Database.php
+// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\Database.php
 
 class Database
 {
@@ -7,21 +7,18 @@ class Database
 
     public function __construct($config)
     {
-        // JAVÍTVA: DSN kiegészítve a charset=utf8mb4 beállítással
-        $dsn = 'mysql:host=' . $config['host'] . ';dbname=' . $config['dbname'] . ';charset=utf8mb4';
-        
-        // ÚJ: PDO opciók a jobb hibakezelésért és alapértelmezett adatformátumért
+        // Build PostgreSQL DSN
+        $dsn = 'pgsql:host=' . $config['host'] . ';port=' . ($config['port'] ?? '5432') . ';dbname=' . $config['dbname'];
+
         $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Kritikus a try-catch blokkok működéséhez
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Alapértelmezetten asszociatív tömböt ad vissza
-            PDO::ATTR_EMULATE_PREPARES   => false,                  // Valódi prepared statement-eket használ, növeli a biztonságot
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
         ];
 
         try {
             $this->pdo = new PDO($dsn, $config['user'], $config['password'], $options);
         } catch (PDOException $e) {
-            // Hiba esetén leállítjuk a futást és kiírjuk a hibát
-            // Éles környezetben ezt egy log fájlba kellene írni, nem a képernyőre.
             die('Adatbázis kapcsolódási hiba: ' . $e->getMessage());
         }
     }

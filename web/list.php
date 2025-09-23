@@ -1,16 +1,13 @@
 <?php
 // filepath: \srv\containers\test_bkt_tnaptar_app\web\list.php
+
 // Betöltjük a configot és a Database osztályt
 $config = require __DIR__ . '/config/config.php';
 require_once __DIR__ . '/app/Database.php';
 
-try {
-    $db = new Database($config);
-    $pdo = $db->getPdo();
-} catch (Exception $e) {
-    echo '<div class="alert alert-danger">Adatbázis kapcsolat hiba: ' . htmlspecialchars($e->getMessage()) . '</div>';
-    exit;
-}
+// Adatbázis kapcsolat létrehozása
+$db = new Database($config);
+$pdo = $db->getPdo();
 
 // Safe ORDER BY mapping - prevents SQL injection
 $orderOptions = [
@@ -28,8 +25,9 @@ if (!array_key_exists($orderBy, $orderOptions)) {
 
 $orderClause = $orderOptions[$orderBy];
 
+// PostgreSQL kompatibilis lekérdezés
 try {
-    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE date >= CURDATE() - INTERVAL 28 DAY ORDER BY " . $orderClause);
+    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE date >= CURRENT_DATE - INTERVAL '28 days' ORDER BY " . $orderClause);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {

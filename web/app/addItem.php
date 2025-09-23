@@ -16,14 +16,14 @@ try {
 
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     $type = $input['type'] ?? $_POST['type'] ?? null;
     $name = $input['name'] ?? $_POST['name'] ?? null;
 
     if (!$type) {
         throw new Exception('Nincs megadva a kért elem típusa.');
     }
-    
+
     if (!$name || trim($name) === '') {
         throw new Exception('Nincs megadva az elem neve.');
     }
@@ -39,7 +39,7 @@ try {
     // Check if already exists
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE category = :category AND value = :value");
     $stmt->execute([':category' => $type, ':value' => $name]);
-    
+
     if ($stmt->fetchColumn() > 0) {
         throw new Exception('Ez az elem már létezik.');
     }
@@ -51,10 +51,10 @@ try {
 
     // Insert new item
     $stmt = $pdo->prepare("
-        INSERT INTO settings (category, value, active, sort_order) 
-        VALUES (:category, :value, 1, :sort_order)
-    ");
-    
+    INSERT INTO settings (category, value, active, sort_order) 
+    VALUES (:category, :value, TRUE, :sort_order)"
+    );
+
     $stmt->execute([
         ':category' => $type,
         ':value' => $name,
@@ -72,5 +72,7 @@ try {
     $response['message'] = $e->getMessage();
 }
 
-while (ob_get_level() > 0) { ob_end_clean(); }
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);

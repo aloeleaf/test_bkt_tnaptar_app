@@ -27,25 +27,25 @@ try {
 
     // Check if this is for dropdown (active only) or admin (all items)
     $forDropdown = isset($_GET['dropdown']) || isset($_GET['type']);
-    
+
     if ($forDropdown) {
         // For dropdowns: only active items, minimal fields
         $stmt = $pdo->prepare("
-            SELECT id, value
-            FROM settings
-            WHERE category = :category AND active = 1
-            ORDER BY sort_order ASC, value ASC
-        ");
+        SELECT id, value
+        FROM settings
+        WHERE category = :category AND active = TRUE
+        ORDER BY sort_order ASC, value ASC
+    ");
     } else {
         // For admin: all items with full details
         $stmt = $pdo->prepare("
-            SELECT id, value, sort_order, active
-            FROM settings
-            WHERE category = :category
-            ORDER BY sort_order ASC, value ASC
-        ");
+        SELECT id, value, sort_order, active
+        FROM settings
+        WHERE category = :category
+        ORDER BY sort_order ASC, value ASC
+    ");
     }
-    
+
     $stmt->execute([':category' => $category]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -60,5 +60,7 @@ try {
 }
 
 // Clear any unwanted output before JSON
-while (ob_get_level() > 0) { ob_end_clean(); }
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);

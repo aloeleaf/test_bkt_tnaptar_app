@@ -10,12 +10,13 @@ services:
         NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
     container_name: php
     environment:
-      # mysql environment
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      # PostgreSQL environment (updated)
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db # The name of the database service in the Docker network
-      # ldap enviromnet
+      - DB_PORT=5432
+      # ldap environment
       - LDAP_SERVER=${LDAP_SERVER}
       - LDAP_DOMAIN=${LDAP_DOMAIN}
       - LDAP_BASE_DN=${LDAP_BASE_DN}
@@ -33,8 +34,6 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx
-    # ports:
-    #    - "8082:80"
     environment:
         HTTP_PROXY: http://10.0.249.120:3128
         HTTPS_PROXY: http://10.0.249.120:3128
@@ -54,37 +53,41 @@ services:
       - "traefik.http.routers.nginx.tls=true"
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
 
-
   db:
-    image: mariadb:latest
+    image: postgres:15
     container_name: db
-    ports:
-      - "3306:3306"
     environment:
       HTTP_PROXY: http://10.0.249.120:3128
       HTTPS_PROXY: http://10.0.249.120:3128
       NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+    #  - ../db:/docker-entrypoint-initdb.d
     networks:
       - local
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: phpmyadmin
+  # Replace phpMyAdmin with pgAdmin for PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
     restart: always
-    # ports:
-    #   - "8081:80"
     environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: ${PGADMIN_CONFIG_SERVER_MODE:-False}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: ${PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION:-True}
+      PGLADMIN_CONFIG_LOGIN_BANNER: ${PGADMIN_CONFIG_LOGIN_BANNER:-"BKT Database Administration"}
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: ${PGADMIN_CONFIG_CONSOLE_LOG_LEVEL:-20}
       HTTP_PROXY: http://10.0.249.120:3128
       HTTPS_PROXY: http://10.0.249.120:3128
       NO_PROXY: localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
     networks:
@@ -92,13 +95,15 @@ services:
       - traefikproxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.phpmyadmin.rule=Host(`test_tnaptar_phpmyadmin.bpkornyekitvsz.birosagiad.hu`)"
-      - "traefik.http.routers.phpmyadmin.entrypoints=websecure"
-      - "traefik.http.routers.phpmyadmin.tls=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`test_tnaptar_pgadmin.bpkornyekitvsz.birosagiad.hu`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls=true"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
 
-
+# Global network and volume definitions   
 volumes:
-  db_data:
+  postgres_data:
+  pgadmin_data:
 
 networks:
   local:
@@ -106,4 +111,3 @@ networks:
   traefikproxy:
     name: traefikproxy
     external: true
- 
