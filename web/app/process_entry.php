@@ -93,15 +93,40 @@ try {
 
 // Summarys
 $subject  = $ugyminoseg;
-$foglalas = trim(
-    "Kezdés: {$startObj->format('H:i')}\n" .
-    "Befejezés: {$endObj->format('H:i')}\n" .
-    "Ügyszám: {$ugyszam}\n" .
-    "Létszám: " . ($letszam ?? '') . "\n" .
-    "Tárgy: {$subject}\n" .
-    "Alperes/Vádlott: {$alperes_terhelt}\n" .
-    "Felperes/Vádló: {$felperes_vadlo}"
-);
+$foglalas = '
+<div style="border:1px solid #ccc; border-radius:6px; padding:10px; font-size:14px; width:100%; box-sizing:border-box;">
+    <div style="margin-bottom:6px;">
+        <span style="font-weight:bold;">Tanács:</span>
+        <span>' . htmlspecialchars($tanacs) . '</span>
+    </div>
+    <div style="margin-bottom:6px;">
+        <span style="font-weight:bold;">Dátum, Kezdés, Befejezés:</span>
+        <span>' . htmlspecialchars($dateForDb) . ', ' . htmlspecialchars($startObj->format('H:i')) . ' - ' . htmlspecialchars($endObj->format('H:i')) . '</span>
+    </div>
+    <div style="margin-bottom:6px;">
+        <span style="font-weight:bold;">Létszám:</span>
+        <span>' . htmlspecialchars($letszam ?? '') . '</span>
+    </div>
+    <div style="margin-bottom:6px;">
+        <span style="font-weight:bold;">Alperes/Vádlott, Felperes/Vádló:</span>
+        <span>' . htmlspecialchars($alperes_terhelt) . ' / ' . htmlspecialchars($felperes_vadlo) . '</span>
+    </div>
+    <div>
+        <span style="font-weight:bold;">Tárgy:</span>
+        <span>' . htmlspecialchars($subject) . '</span>
+    </div>
+</div>
+';
+
+// $foglalas = trim(
+//     "Kezdés: {$startObj->format('H:i')}\n" .
+//     "Befejezés: {$endObj->format('H:i')}\n" .
+//     "Ügyszám: {$ugyszam}\n" .
+//     "Létszám: " . ($letszam ?? '') . "\n" .
+//     "Tárgy: {$subject}\n" .
+//     "Alperes/Vádlott: {$alperes_terhelt}\n" .
+//     "Felperes/Vádló: {$felperes_vadlo}"
+// );
 
 // Insert
 try {

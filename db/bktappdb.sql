@@ -28,7 +28,7 @@ CREATE TABLE rooms (
     resztvevok VARCHAR(100) NOT NULL,
     alperes_terhelt VARCHAR(100) NOT NULL,
     felperes_vadlo VARCHAR(100) NOT NULL,
-    foglalas VARCHAR(255) NOT NULL,
+    foglalas TEXT NOT NULL,
     UNIQUE(date, rooms, start_time)
 );
 
@@ -91,11 +91,14 @@ BEGIN
             END, E''\n--- --- ---\n''
         ) AS "' || room_record.value || '",';
     END LOOP;
-    sql_text := rtrim(sql_text, ',');
+    -- Add aggregate columns before removing the trailing comma
     sql_text := sql_text || '
         COUNT(r.id) as total_bookings,
         MIN(r.start_time) as first_booking,
-        MAX(r.end_time) as last_booking
+        MAX(r.end_time) as last_booking';
+    -- Remove the last comma if present
+    sql_text := rtrim(sql_text, ',');
+    sql_text := sql_text || '
     FROM rooms r
     WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''30 days''
     GROUP BY r.date
@@ -141,9 +144,11 @@ BEGIN
             END, ''''
         ) AS "' || room_record.value || '",';
     END LOOP;
+    -- Add aggregate column before removing the trailing comma
+    sql_text := sql_text || '
+        COUNT(r.id) as total_bookings';
     sql_text := rtrim(sql_text, ',');
     sql_text := sql_text || '
-        COUNT(r.id) as total_bookings
     FROM rooms r
     WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''14 days''
     GROUP BY r.date
@@ -177,3 +182,5 @@ CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, ac
 SELECT setval('name_id_seq', COALESCE((SELECT MAX(id) FROM name), 1));
 SELECT setval('rooms_id_seq', COALESCE((SELECT MAX(id) FROM rooms), 1));
 SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 576));
+
+ALTER TABLE name ADD CONSTRAINT name_unique UNIQUE (name);
