@@ -36,8 +36,8 @@ $alperes_terhelt  = trim($_POST['alperes_terhelt'] ?? '');
 $felperes_vadlo   = trim($_POST['felperes_vadlo'] ?? '');
 
 // Required
-if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $startInput === '' || $resztvevok === '') {
-    respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők.'], 422);
+if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $startInput === '' || $resztvevok === '' || $letszamInput === '') {
+    respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők, Idézettek száma.'], 422);
 }
 
 // Validate date

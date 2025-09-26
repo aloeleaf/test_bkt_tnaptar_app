@@ -63,7 +63,7 @@ if ($method === 'GET') {
     if ($id <= 0) {
         respond(['success' => false, 'message' => 'Hiányzó bejegyzés azonosító (id).', 'data' => null], 422);
     }
-    if ($birosag === '' || $tanacs === '' || $date === '' || $rooms === '' || $ugyszam === '' || $start_input === '') {
+    if ($birosag === '' || $tanacs === '' || $date === '' || $rooms === '' || $ugyszam === '' || $start_input === '' || $letszamInput === '') {
         respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Ügyszám, Kezdési idő.', 'data' => null], 422);
     }
 
