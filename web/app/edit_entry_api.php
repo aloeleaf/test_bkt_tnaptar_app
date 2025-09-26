@@ -1,5 +1,4 @@
 <?php
-// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\edit_entry_api.php
 ob_start();
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -37,12 +36,8 @@ if ($method === 'GET') {
         if (!$entry) {
             respond(['success' => false, 'message' => 'A bejegyzés nem található.', 'data' => null], 404);
         }
-        
-        // Split subject into parts for backward compatibility
-        $subject_parts = explode("\n", $entry['subject'] ?? '', 2);
-        $entry['ugyminoseg'] = $subject_parts[0] ?? '';
-        $entry['intezkedes'] = $subject_parts[1] ?? '';
-        
+        // Only keep subject as-is for backward compatibility
+        $entry['subject'] = $entry['subject'] ?? '';
         respond(['success' => true, 'message' => '', 'data' => $entry]);
     } catch (PDOException $e) {
         respond(['success' => false, 'message' => 'Adatbázis hiba: ' . $e->getMessage(), 'data' => null], 500);
@@ -63,18 +58,7 @@ if ($method === 'GET') {
     $letszam = trim($_POST['letszam'] ?? $_POST['azon'] ?? '');
     $alperes_terhelt = trim($_POST['alperes_terhelt'] ?? '');
     $felperes_vadlo = trim($_POST['felperes_vadlo'] ?? '');
-    
-    // Handle subject field - could be combined or separate
-    $subject_combined = trim($_POST['subject'] ?? '');
-    $ugyminoseg = trim($_POST['ugyminoseg'] ?? '');
-    $intezkedes = trim($_POST['intezkedes'] ?? '');
-    
-    // If combined subject is provided, use it; otherwise combine separate fields
-    if ($subject_combined) {
-        $final_subject = $subject_combined;
-    } else {
-        $final_subject = trim($ugyminoseg . "\n" . $intezkedes);
-    }
+    $subject = trim($_POST['subject'] ?? '');
 
     if ($id <= 0) {
         respond(['success' => false, 'message' => 'Hiányzó bejegyzés azonosító (id).', 'data' => null], 422);
@@ -125,16 +109,43 @@ if ($method === 'GET') {
         respond(['success' => false, 'message' => 'Ütközésvizsgálat hiba: ' . $e->getMessage(), 'data' => null], 500);
     }
 
-    // Create foglalas summary
-    $foglalas = trim(
-        "Kezdés: " . $start_ts->format('H:i') . "\n" .
-        "Befejezés: " . $end_ts->format('H:i') . "\n" .
-        "Ügyszám: " . $ugyszam . "\n" .
-        "Létszám: " . $letszam . "\n" .
-        "Tárgy: " . $final_subject . "\n" .
-        "Alperes/Vádlott: " . $alperes_terhelt . "\n" .
-        "Felperes/Vádló: " . $felperes_vadlo
-    );
+    // Create foglalas summary (HTML structure)
+    $foglalas = '
+<div class="foglalas">
+    <div class="row">
+        <div class="cell-tanacs">Tanács:</div>
+        <div class="cell-tanacs-adat">' . htmlspecialchars($tanacs) . '</div>       
+    </div>
+    <div class="row">
+        <div class="cell-date">Dátum</div>
+        <div class="cell-start">Kezdés</div>
+        <div class="cell-end">Befejezés</div>
+    </div>
+    <div class="row">
+        <div class="cell-date-adat">' . htmlspecialchars($date) . '</div>
+        <div class="cell-start-adat">' . htmlspecialchars($start_ts->format('H:i')) . '</div>
+        <div class="cell-end-adat">' . htmlspecialchars($end_ts->format('H:i')) . '</div>
+    </div>
+    <div class="row">
+        <div class="cell-letszam">Létszám:</div>
+        <div class="cell-letszam-adat">' . htmlspecialchars($letszam ?? '') . '</div>
+    </div>
+    <div class="row">
+        <div class="cell-alperes-vadlott">Alperes/Vádlott</div>
+        <div class="cell-felperes-vadlo">Felperes/Vádló:</div>
+    </div>
+    <div class="row">
+        <div class="cell-alperes-terhelt-adat">' . htmlspecialchars($alperes_terhelt) . '</div>
+        <div class="cell-felperes-vadlo-adat">' . htmlspecialchars($felperes_vadlo) . '</div>
+    </div>
+    <div class="row">
+        <div class="cell-targy">Tárgy:</div>
+    </div>
+    <div>
+        <div class="cell-targy-adat">' . htmlspecialchars($subject) . '</div>
+    </div>
+</div>
+';
 
     // Update the database
     try {
@@ -164,11 +175,10 @@ if ($method === 'GET') {
             ':end_time' => $end_time_for_db,
             ':ugyszam' => $ugyszam,
             ':persons' => $persons,
-            #':letszam' => $letszam,
             ':letszam' => ($letszam === '' ? null : (int)$letszam),
             ':alperes_terhelt' => $alperes_terhelt,
             ':felperes_vadlo' => $felperes_vadlo,
-            ':subject' => $final_subject,
+            ':subject' => $subject,
             ':foglalas' => $foglalas,
             ':id' => $id
         ]);

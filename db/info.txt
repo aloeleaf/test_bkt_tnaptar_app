@@ -10,7 +10,7 @@ docker compose exec -T db psql -U dbappuser -d postgres -c "DROP DATABASE IF EXI
 # PostgreSQL commands (updated with lowercase database name)
 docker compose exec -T db psql -U dbappuser -d bktappdb < ./db/bktAppdb.sql
 
-docker compose exec -T db psql -U dbappuser -d postgres -c "DROP DATABASE IF EXISTS bktappdb;" && docker compose exec -T db psql -U dbappuser -d postgres -c "CREATE DATABASE bktappdb;" && docker compose exec -T db psql -U dbappuser -d bktappdb < ./db/bktAppdb.sql
+docker compose exec -T db psql -U dbappuser -d postgres -c "DROP DATABASE IF EXISTS bktappdb;" && docker compose exec -T db psql -U dbappuser -d postgres -c "CREATE DATABASE bktappdb;" && docker compose exec -T db psql -U dbappuser -d bktappdb < ./db/bktappdb.sql
 
 
 docker compose exec -T db psql -U dbappuser -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='bktappdb' AND pid <> pg_backend_pid();"

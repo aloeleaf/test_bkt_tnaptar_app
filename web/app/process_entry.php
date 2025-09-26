@@ -94,39 +94,41 @@ try {
 // Summarys
 $subject  = $ugyminoseg;
 $foglalas = '
-<div style="border:1px solid #ccc; border-radius:6px; padding:10px; font-size:14px; width:100%; box-sizing:border-box;">
-    <div style="margin-bottom:6px;">
-        <span style="font-weight:bold;">Tanács:</span>
-        <span>' . htmlspecialchars($tanacs) . '</span>
+<div class="foglalas">
+    <div class="row">
+        <div class="cell-tanacs">Tanács:</div>
+        <div class="cell-tanacs-adat">' . htmlspecialchars($tanacs) . '</div>       
     </div>
-    <div style="margin-bottom:6px;">
-        <span style="font-weight:bold;">Dátum, Kezdés, Befejezés:</span>
-        <span>' . htmlspecialchars($dateForDb) . ', ' . htmlspecialchars($startObj->format('H:i')) . ' - ' . htmlspecialchars($endObj->format('H:i')) . '</span>
+    <div class="row">
+        <div class="cell-date">Dátum</div>
+        <div class="cell-start">Kezdés</div>
+        <div class="cell-end">Befejezés</div>
     </div>
-    <div style="margin-bottom:6px;">
-        <span style="font-weight:bold;">Létszám:</span>
-        <span>' . htmlspecialchars($letszam ?? '') . '</span>
+    <div class="row">
+        <div class="cell-date-adat">' . htmlspecialchars($dateForDb) . '</div>
+        <div class="cell-start-adat">' . htmlspecialchars($startObj->format('H:i')) . '</div>
+        <div class="cell-end-adat">' . htmlspecialchars($endObj->format('H:i')) . '</div>
     </div>
-    <div style="margin-bottom:6px;">
-        <span style="font-weight:bold;">Alperes/Vádlott, Felperes/Vádló:</span>
-        <span>' . htmlspecialchars($alperes_terhelt) . ' / ' . htmlspecialchars($felperes_vadlo) . '</span>
+    <div class="row">
+        <div class="cell-letszam">Létszám:</div>
+        <div class="cell-letszam-adat">' . htmlspecialchars($letszam ?? '') . '</div>
+    </div>
+    <div class="row">
+        <div class="cell-alperes-terhelt">Alperes/Vádlott</div>
+        <div class="cell-felperes-vadlo">Felperes/Vádló:</div>
+    </div>
+    <div class="row">
+        <div class="cell-alperes-terhelt-adat">' . htmlspecialchars($alperes_terhelt) . '</div>
+        <div class="cell-felperes-vadlo-adat">' . htmlspecialchars($felperes_vadlo) . '</div>
+    </div>
+    <div class="row">
+        <div class="cell-targy">Tárgy:</div>
     </div>
     <div>
-        <span style="font-weight:bold;">Tárgy:</span>
-        <span>' . htmlspecialchars($subject) . '</span>
+        <div class="cell-targy-adat">' . htmlspecialchars($subject) . '</div>
     </div>
 </div>
 ';
-
-// $foglalas = trim(
-//     "Kezdés: {$startObj->format('H:i')}\n" .
-//     "Befejezés: {$endObj->format('H:i')}\n" .
-//     "Ügyszám: {$ugyszam}\n" .
-//     "Létszám: " . ($letszam ?? '') . "\n" .
-//     "Tárgy: {$subject}\n" .
-//     "Alperes/Vádlott: {$alperes_terhelt}\n" .
-//     "Felperes/Vádló: {$felperes_vadlo}"
-// );
 
 // Insert
 try {
