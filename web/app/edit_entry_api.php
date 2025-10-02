@@ -72,6 +72,22 @@ if ($method === 'GET') {
         respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Ügyszám, Kezdési idő.', 'data' => null], 422);
     }
 
+    // Validate date format
+    $dateObj = DateTime::createFromFormat('Y-m-d', $date);
+    $dtErr = DateTime::getLastErrors();
+    $warnCount = is_array($dtErr) ? ($dtErr['warning_count'] ?? 0) : 0;
+    $errCount  = is_array($dtErr) ? ($dtErr['error_count'] ?? 0) : 0;
+    if (!$dateObj || $warnCount > 0 || $errCount > 0) {
+        respond(['success' => false, 'message' => 'Érvénytelen dátum formátum (YYYY-MM-DD).'], 422);
+    }
+
+    // Check if the date is in the past (before today)
+    $today = new DateTime();
+    $today->setTime(0, 0, 0); // Set to midnight to compare only dates, not times
+    if ($dateObj < $today) {
+        respond(['success' => false, 'message' => 'Hiba: Múltbeli dátumra nem lehet foglalást módosítani.', 'data' => null], 422);
+    }
+
     // Validate and process time fields
     $start_ts = DateTime::createFromFormat('H:i', $start_input);
     if (!$start_ts) {

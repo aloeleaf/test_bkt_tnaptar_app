@@ -38,6 +38,23 @@ $felperes_vadlo   = trim($_POST['felperes_vadlo'] ?? '');
 // Debug logging to see what values we're getting
 error_log("DEBUG NEW ENTRY: birosag='$birosag', tanacs='$tanacs', dateInput='$dateInput', room='$room', startInput='$startInput', resztvevok='$resztvevok', letszamInput='$letszamInput'");
 
+// Cleanup old records for the specific room (older than 1 week)
+try {
+    $cleanup_stmt = $pdo->prepare(
+        "DELETE FROM rooms 
+         WHERE rooms = :room 
+           AND date < CURRENT_DATE - INTERVAL '1 week'"
+    );
+    $cleanup_stmt->execute([':room' => $room]);
+    $deleted_count = $cleanup_stmt->rowCount();
+    if ($deleted_count > 0) {
+        error_log("CLEANUP: Deleted $deleted_count old records for room '$room'");
+    }
+} catch (PDOException $e) {
+    error_log("CLEANUP ERROR: " . $e->getMessage());
+    // Don't fail the main operation if cleanup fails
+}
+
 // Required fields check (make letszam optional since it can be nullable in the database)
 if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $startInput === '' || $resztvevok === '') {
     respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők.'], 422);
