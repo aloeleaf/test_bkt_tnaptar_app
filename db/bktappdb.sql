@@ -214,16 +214,16 @@ BEGIN
             margin: 40px 0;
                 }        
         .row { display: flex; font-size: 18px; margin-bottom: 6px; }
-        .cell-ugyszam { width: 120px; font-weight: bold; font-size: 18px; }
-        .cell-ugyszam-adat { width: 100%; font-size: 18px; }
-        .cell-tanacs { width: 120px; font-weight: bold; font-size: 18px; }
-        .cell-tanacs-adat { width: 100%; font-size: 18px; }
-        .cell-date { width: 120px; font-weight: bold; }
-        .cell-start { width: 100px; font-weight: bold; }
-        .cell-end { width: 100px; font-weight: bold; }
-        .cell-date-adat { width: 120px; }
-        .cell-start-adat { width: 100px; }
-        .cell-end-adat { width: 100px; }
+        .cell-ugyszam { width: 120px; font-weight: bold; font-size: 22px; }
+        .cell-ugyszam-adat { width: 100%; font-size: 22px; }
+        .cell-tanacs { width: 120px; font-weight: bold; font-size: 20px; }
+        .cell-tanacs-adat { width: 100%; font-size: 20px; }
+        .cell-date { width: 120px; font-weight: bold; font-size: 20px; }
+        .cell-start { width: 100px; font-weight: bold; font-size: 20px; }
+        .cell-end { width: 100px; font-weight: bold; font-size: 20px;}
+        .cell-date-adat { width: 120px; font-size: 20px;}
+        .cell-start-adat { width: 100px; font-size: 20px;}
+        .cell-end-adat { width: 100px; font-size: 20px;}
         .cell-letszam { width: 80px; font-weight: bold; }
         .cell-letszam-adat { width: 40px; }
         .cell-alperes-terhelt { width: 200px; font-weight: bold; }
@@ -306,7 +306,7 @@ BEGIN
         )
     ) sub
     ORDER BY date
-    LIMIT 6';
+    LIMIT 4';
 
     EXECUTE sql_text;
 END;

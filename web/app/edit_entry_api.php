@@ -156,7 +156,7 @@ if ($method === 'GET') {
         <div class="cell-letszam-adat">' . htmlspecialchars($letszam ?? '') . '</div>
     </div>
     <div class="row">
-        <div class="cell-alperes-terhelt">Alperes/Vádlott</div>
+        <div class="cell-alperes-terhelt">Alperes/Terhelt</div>
         <div class="cell-felperes-vadlo">Felperes/Vádló:</div>
     </div>
     <div class="row">
@@ -166,7 +166,7 @@ if ($method === 'GET') {
     <div class="row">
         <div class="cell-targy">Tárgy:</div>
     </div>
-    <div>
+    <div class="row">
         <div class="cell-targy-adat">' . htmlspecialchars($subject) . '</div>
     </div>
 </div>
