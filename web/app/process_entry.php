@@ -35,9 +35,12 @@ $ugyminoseg       = trim($_POST['ugyminoseg'] ?? '');
 $alperes_terhelt  = trim($_POST['alperes_terhelt'] ?? '');
 $felperes_vadlo   = trim($_POST['felperes_vadlo'] ?? '');
 
-// Required
-if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $startInput === '' || $resztvevok === '' || $letszamInput === '') {
-    respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők, Idézettek száma.'], 422);
+// Debug logging to see what values we're getting
+error_log("DEBUG NEW ENTRY: birosag='$birosag', tanacs='$tanacs', dateInput='$dateInput', room='$room', startInput='$startInput', resztvevok='$resztvevok', letszamInput='$letszamInput'");
+
+// Required fields check (make letszam optional since it can be nullable in the database)
+if ($birosag === '' || $tanacs === '' || $dateInput === '' || $room === '' || $startInput === '' || $resztvevok === '') {
+    respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Kezdési idő, Résztvevők.'], 422);
 }
 
 // Validate date
@@ -95,6 +98,10 @@ try {
 $subject  = $ugyminoseg;
 $foglalas = '
 <div class="foglalas">
+    <div class="row">
+        <div class="cell-ugyszam">Ügyszám:</div>
+        <div class="cell-ugyszam-adat">' . htmlspecialchars($ugyszam) . '</div>       
+    </div>
     <div class="row">
         <div class="cell-tanacs">Tanács:</div>
         <div class="cell-tanacs-adat">' . htmlspecialchars($tanacs) . '</div>       

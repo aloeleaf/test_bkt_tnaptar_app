@@ -24,7 +24,7 @@ CREATE TABLE rooms (
     rooms VARCHAR(255) NOT NULL,
     ugyszam VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
-    letszam INTEGER NOT NULL,
+    letszam INTEGER,
     resztvevok VARCHAR(100) NOT NULL,
     alperes_terhelt VARCHAR(100) NOT NULL,
     felperes_vadlo VARCHAR(100) NOT NULL,
@@ -171,9 +171,18 @@ RETURNS void AS $$
 DECLARE
     room_record RECORD;
     sql_text TEXT;
+    room_columns TEXT;
+    default_row TEXT;
 BEGIN
     DROP VIEW IF EXISTS foglalas_matrix_view;
-    sql_text := 'CREATE VIEW foglalas_matrix_view AS SELECT r.date,';
+
+    -- Initialize variables
+    room_columns := '';
+    default_row := '';
+
+    sql_text := 'CREATE VIEW foglalas_matrix_view AS 
+    SELECT * FROM (
+        SELECT r.date,';
 
     -- Add a column for each active room
     FOR room_record IN 
@@ -185,7 +194,6 @@ BEGIN
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="600">
     <style>
         .foglalas {
             border: 1px solid #ccc;
@@ -196,47 +204,108 @@ BEGIN
             box-sizing: border-box;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        .row { display: flex; font-size: 16px; margin-bottom: 6px; }
-        .cell-tanacs { width: 80px; font-weight: bold; font-size: 18px; }
+        .info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 62px;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0;
+                }        
+        .row { display: flex; font-size: 18px; margin-bottom: 6px; }
+        .cell-ugyszam { width: 120px; font-weight: bold; font-size: 18px; }
+        .cell-ugyszam-adat { width: 100%; font-size: 18px; }
+        .cell-tanacs { width: 120px; font-weight: bold; font-size: 18px; }
         .cell-tanacs-adat { width: 100%; font-size: 18px; }
         .cell-date { width: 120px; font-weight: bold; }
-        .cell-start { width: 80px; font-weight: bold; }
-        .cell-end { width: 90px; font-weight: bold; }
+        .cell-start { width: 100px; font-weight: bold; }
+        .cell-end { width: 100px; font-weight: bold; }
         .cell-date-adat { width: 120px; }
-        .cell-start-adat { width: 80px; }
-        .cell-end-adat { width: 90px; }
+        .cell-start-adat { width: 100px; }
+        .cell-end-adat { width: 100px; }
         .cell-letszam { width: 80px; font-weight: bold; }
         .cell-letszam-adat { width: 40px; }
         .cell-alperes-terhelt { width: 200px; font-weight: bold; }
         .cell-felperes-vadlo { width: 200px; font-weight: bold; }
         .cell-alperes-terhelt-adat { width: 200px; }
-        .cell-felperes-vadlo-adat { width: 200px }
-        .cell-targy { width: 80px; font-weight: bold }
+        .cell-felperes-vadlo-adat { width: 200px; }
+        .cell-targy { width: 80px; font-weight: bold; }
         .cell-targy-adat { width: 100%; }
         .bold { font-weight: bold; }
     </style>
     <title>foglalas</title>
 </head>
 <body>'' ||
-        STRING_AGG(
-            CASE WHEN r.rooms = ''' || room_record.value || ''' 
-                THEN COALESCE(r.foglalas, '''') 
-            END, E''<hr>''
+        COALESCE(
+            STRING_AGG(
+                CASE WHEN r.rooms = ''' || room_record.value || ''' 
+                    THEN COALESCE(r.foglalas, '''') 
+                END, 
+                E''<hr>''
+            ),
+            ''<div class="foglalas">JELLENLEG NINCS TÁRGYALÁS</div>''
         ) ||
         ''</body>
 </html>'' AS "' || room_record.value || '",';
+
+        -- Build default row columns
+        default_row := default_row || '''<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .foglalas {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 62px;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0;
+                }  
+    </style>
+    <title>TÁRGYALÓ</title>
+</head>
+<body>
+    <div class="info">NINCS TÁRGYALÁS</div>
+</body>
+</html>'' AS "' || room_record.value || '",';
     END LOOP;
 
-    -- Remove trailing comma
+    -- Remove trailing comma from main query
     sql_text := left(sql_text, length(sql_text) - 1);
 
-    -- Only today, and start_time not older than 1 hour ago
+    -- Remove trailing comma from default row
+    default_row := left(default_row, length(default_row) - 1);
+
+    -- Complete the query with UNION for empty result
     sql_text := sql_text || '
-    FROM rooms r
-    WHERE r.date = CURRENT_DATE
-      AND r.start_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
-    GROUP BY r.date
-    ORDER BY r.date
+        FROM rooms r
+        WHERE r.date = CURRENT_DATE
+          AND r.start_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
+        GROUP BY r.date
+
+        UNION ALL
+
+        SELECT CURRENT_DATE as date, ' || default_row || '
+        WHERE NOT EXISTS (
+            SELECT 1 FROM rooms r2 
+            WHERE r2.date = CURRENT_DATE 
+              AND r2.start_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
+        )
+    ) sub
+    ORDER BY date
     LIMIT 6';
 
     EXECUTE sql_text;

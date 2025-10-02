@@ -49,7 +49,7 @@ if ($method === 'GET') {
     // Try new edit form field names first, then fall back to legacy names
     $birosag = trim($_POST['birosag'] ?? $_POST['court_name'] ?? '');
     $tanacs = trim($_POST['tanacs'] ?? $_POST['council_name'] ?? '');
-    $date = trim($_POST['date'] ?? '');
+    $date = trim($_POST['date'] ?? $_POST['session_date'] ?? '');
     $rooms = trim($_POST['rooms'] ?? $_POST['room_number'] ?? '');
     $start_input = trim($_POST['start_time'] ?? $_POST['ido'] ?? $_POST['kezd_ido'] ?? '');
     $end_input_raw = trim($_POST['end_time'] ?? $_POST['befejez_ido'] ?? '');
@@ -60,10 +60,15 @@ if ($method === 'GET') {
     $felperes_vadlo = trim($_POST['felperes_vadlo'] ?? '');
     $subject = trim($_POST['subject'] ?? '');
 
+    // Debug logging to see what values we're getting
+    error_log("DEBUG: id=$id, birosag='$birosag', tanacs='$tanacs', date='$date', rooms='$rooms', ugyszam='$ugyszam', start_input='$start_input', letszam='$letszam'");
+
     if ($id <= 0) {
         respond(['success' => false, 'message' => 'Hiányzó bejegyzés azonosító (id).', 'data' => null], 422);
     }
-    if ($birosag === '' || $tanacs === '' || $date === '' || $rooms === '' || $ugyszam === '' || $start_input === '' || $letszamInput === '') {
+    
+    // Make letszam optional since it can be nullable in the database
+    if ($birosag === '' || $tanacs === '' || $date === '' || $rooms === '' || $ugyszam === '' || $start_input === '') {
         respond(['success' => false, 'message' => 'Hiányzó kötelező mező(k): Bíróság, Tanács, Dátum, Tárgyaló, Ügyszám, Kezdési idő.', 'data' => null], 422);
     }
 
@@ -113,6 +118,10 @@ if ($method === 'GET') {
     $foglalas = '
 <div class="foglalas">
     <div class="row">
+        <div class="cell-ugyszam">Ügyszám:</div>
+        <div class="cell-ugyszam-adat">' . htmlspecialchars($ugyszam) . '</div>       
+    </div>
+    <div class="row">
         <div class="cell-tanacs">Tanács:</div>
         <div class="cell-tanacs-adat">' . htmlspecialchars($tanacs) . '</div>       
     </div>
@@ -131,7 +140,7 @@ if ($method === 'GET') {
         <div class="cell-letszam-adat">' . htmlspecialchars($letszam ?? '') . '</div>
     </div>
     <div class="row">
-        <div class="cell-alperes-vadlott">Alperes/Vádlott</div>
+        <div class="cell-alperes-terhelt">Alperes/Vádlott</div>
         <div class="cell-felperes-vadlo">Felperes/Vádló:</div>
     </div>
     <div class="row">
