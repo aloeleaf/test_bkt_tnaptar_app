@@ -3,7 +3,7 @@ services:
     #image: aloeleaf/bkt-targyalo-php:latest
     build:
       context: ./build # The directory where the Dockerfile is located
-      dockerfile: Dockerfile # The name of the Dockerfile
+      dockerfile: PHPDockerfile # The name of the Dockerfile
       args:
         HTTP_PROXY: http://10.0.249.120:3128
         HTTPS_PROXY: http://10.0.249.120:3128
@@ -63,9 +63,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DATABASE}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Europe/Budapest
     ports:
       - "5432:5432"
     volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
       - postgres_data:/var/lib/postgresql/data
     #  - ../db:/docker-entrypoint-initdb.d
     networks:

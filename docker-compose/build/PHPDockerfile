@@ -1,0 +1,111 @@
+FROM php:8.2-fpm
+
+ENV http_proxy=http://10.0.249.120:3128
+ENV https_proxy=http://10.0.249.120:3128
+ENV no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,.birosagiad.hu
+
+RUN echo 'Acquire::http::Proxy "http://10.0.249.120:3128";' > /etc/apt/apt.conf.d/01proxy
+
+# Set timezone
+ENV TZ=Europe/Budapest
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Install system utilities + Chrony
+RUN apt-get update && apt-get install -y \
+    procps \
+    iproute2 \
+    net-tools \
+    chrony \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure Chrony
+RUN echo "server 10.15.49.100 iburst" > /etc/chrony/chrony.conf && \
+    echo "server 10.0.249.227 iburst" >> /etc/chrony/chrony.conf && \
+    echo "server 10.0.249.228 iburst" >> /etc/chrony/chrony.conf && \
+    echo "server 0.pool.ntp.org iburst" >> /etc/chrony/chrony.conf && \
+    echo "driftfile /var/lib/chrony/chrony.drift" >> /etc/chrony/chrony.conf && \
+    echo "makestep 1.0 3" >> /etc/chrony/chrony.conf && \
+    echo "rtcsync" >> /etc/chrony/chrony.conf
+
+
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    libldap2-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-configure ldap --with-ldap \
+    && docker-php-ext-install ldap \
+    && docker-php-ext-install pdo pdo_pgsql
+
+# Create startup script for Chrony
+RUN echo '#!/bin/bash\n\
+# Start Chrony daemon\n\
+chronyd -d &\n\
+# Force immediate sync\n\
+sleep 2\n\
+chrony sources -v\n\
+# Start PHP-FPM\n\
+exec "$@"' > /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
+
+ENTRYPOINT ["/usr/local/bin/start.sh"]
+CMD ["php-fpm"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Set proxy environment variables (if needed)
+# ARG HTTP_PROXY
+# ARG HTTPS_PROXY
+# ARG NO_PROXY
+
+# ENV http_proxy=${HTTP_PROXY}
+# ENV https_proxy=${HTTPS_PROXY}
+# ENV no_proxy=${NO_PROXY}
+
+# # Set APT proxy
+# RUN echo 'Acquire::http::Proxy "${http_proxy}";' > /etc/apt/apt.conf.d/01proxy
+
+
+# # Install system utilities
+# RUN apt-get update && apt-get install -y \
+#     procps \
+#     iproute2 \
+#     net-tools \
+#     # ...other packages...
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Install system dependencies and PHP extensions
+# RUN apt-get update && apt-get install -y \
+#     libldap2-dev \
+#     libpq-dev \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && docker-php-ext-configure ldap --with-ldap \
+#     && docker-php-ext-install ldap \
+#     && docker-php-ext-install pdo pdo_pgsql
+
+# Optionally install other extensions
+#RUN docker-php-ext-install pdo pdo_mysql
+
+# Copy custom PHP config (this is optional; you already mount it)
+# COPY ./etc/php/php.ini /usr/local/etc/php/php.ini

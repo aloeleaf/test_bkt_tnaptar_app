@@ -1,0 +1,27 @@
+FROM postgres:15
+
+# Set timezone
+ENV TZ=Europe/Budapest
+ENV PGTZ=Europe/Budapest
+
+RUN apt-get update && apt-get install -y \
+   chrony \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Configure Chrony
+RUN echo "server 10.15.49.100 iburst" > /etc/chrony/chrony.conf && \
+    echo "server 10.0.249.227 iburst" >> /etc/chrony/chrony.conf && \
+    echo "makestep 1.0 3" >> /etc/chrony/chrony.conf
+
+# Start script
+RUN echo '#!/bin/bash\n\
+chronyd -d &\n\
+exec "$@"' > /usr/local/bin/start-with-time.sh && \
+    chmod +x /usr/local/bin/start-with-time.sh
+
+ENTRYPOINT ["/usr/local/bin/start-with-time.sh"]
+CMD ["docker-entrypoint.sh", "postgres"]

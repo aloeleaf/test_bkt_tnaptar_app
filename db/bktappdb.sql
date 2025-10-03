@@ -42,318 +42,6 @@ CREATE TABLE settings (
 );
 
 
--- Remove duplicate room entries from settings
-DELETE FROM settings s1
-USING settings s2
-WHERE s1.id > s2.id 
-AND s1.category = 'room' 
-AND s1.value = s2.value 
-AND s1.active = s2.active;
-
--- Drop functions if they exist (for idempotency)
-DROP FUNCTION IF EXISTS create_room_schedule_view() CASCADE;
-DROP FUNCTION IF EXISTS create_room_schedule_html_view() CASCADE;
-DROP FUNCTION IF EXISTS refresh_room_views() CASCADE;
-
--- ==========================================
--- Dynamic room schedule view (text summary)
--- ==========================================
-CREATE OR REPLACE FUNCTION create_room_schedule_view()
-RETURNS void AS $$
-DECLARE
-    room_record RECORD;
-    sql_text TEXT;
-BEGIN
-    DROP VIEW IF EXISTS room_schedule_view;
-    sql_text := 'CREATE VIEW room_schedule_view AS SELECT 
-        r.date,
-        CASE 
-            WHEN EXTRACT(DOW FROM r.date) = 1 THEN ''Hétfő''
-            WHEN EXTRACT(DOW FROM r.date) = 2 THEN ''Kedd''
-            WHEN EXTRACT(DOW FROM r.date) = 3 THEN ''Szerda''
-            WHEN EXTRACT(DOW FROM r.date) = 4 THEN ''Csütörtök''
-            WHEN EXTRACT(DOW FROM r.date) = 5 THEN ''Péntek''
-            WHEN EXTRACT(DOW FROM r.date) = 6 THEN ''Szombat''
-            WHEN EXTRACT(DOW FROM r.date) = 0 THEN ''Vasárnap''
-        END as hungarian_day,';
-    FOR room_record IN 
-        SELECT DISTINCT value 
-        FROM settings 
-        WHERE category = 'room' AND active = true 
-        ORDER BY value
-    LOOP
-        sql_text := sql_text || '
-        STRING_AGG(
-            CASE WHEN r.rooms = ''' || room_record.value || ''' THEN 
-                TO_CHAR(r.start_time, ''HH24:MI'') || '' - '' || 
-                TO_CHAR(r.end_time, ''HH24:MI'') || E''\n'' ||
-                ''Foglalás: '' || COALESCE(r.foglalas, '''')
-            END, E''\n--- --- ---\n''
-        ) AS "' || room_record.value || '",';
-    END LOOP;
-    -- Add aggregate columns before removing the trailing comma
-    sql_text := sql_text || '
-        COUNT(r.id) as total_bookings,
-        MIN(r.start_time) as first_booking,
-        MAX(r.end_time) as last_booking';
-    -- Remove the last comma if present
-    sql_text := rtrim(sql_text, ',');
-    sql_text := sql_text || '
-    FROM rooms r
-    WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''30 days''
-    GROUP BY r.date
-    ORDER BY r.date';
-    EXECUTE sql_text;
-END;
-$$ LANGUAGE plpgsql;
-
--- ==========================================
--- Dynamic HTML room schedule view (HTML summary)
--- ==========================================
-CREATE OR REPLACE FUNCTION create_room_schedule_html_view()
-RETURNS void AS $$
-DECLARE
-    room_record RECORD;
-    sql_text TEXT;
-BEGIN
-    DROP VIEW IF EXISTS room_schedule_html_view;
-    sql_text := 'CREATE VIEW room_schedule_html_view AS SELECT 
-        r.date,
-        CASE 
-            WHEN EXTRACT(DOW FROM r.date) = 1 THEN ''Hétfő''
-            WHEN EXTRACT(DOW FROM r.date) = 2 THEN ''Kedd''
-            WHEN EXTRACT(DOW FROM r.date) = 3 THEN ''Szerda''
-            WHEN EXTRACT(DOW FROM r.date) = 4 THEN ''Csütörtök''
-            WHEN EXTRACT(DOW FROM r.date) = 5 THEN ''Péntek''
-            WHEN EXTRACT(DOW FROM r.date) = 6 THEN ''Szombat''
-            WHEN EXTRACT(DOW FROM r.date) = 0 THEN ''Vasárnap''
-        END as hungarian_day,';
-    -- Add a column for each active room with HTML formatting        
-    FOR room_record IN 
-        SELECT DISTINCT value 
-        FROM settings 
-        WHERE category = 'room' AND active = true 
-        ORDER BY value
-    LOOP
-        sql_text := sql_text || '
-        STRING_AGG(
-            CASE WHEN r.rooms = ''' || room_record.value || ''' THEN 
-                ''<div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin: 4px 0;">'' ||
-                ''<div style="font-weight: bold; color: #495057;">'' || 
-                TO_CHAR(r.start_time, ''HH24:MI'') || '' - '' || TO_CHAR(r.end_time, ''HH24:MI'') || ''</div>'' ||
-                ''<div style="color: #007bff;">Ügyszám: '' || COALESCE(r.ugyszam, '''') || ''</div>'' ||
-                ''<div style="color: #28a745;">Foglalás: '' || COALESCE(r.foglalas, '''') || ''</div>'' ||
-                ''</div>''
-            END, ''''
-        ) AS "' || room_record.value || '",';
-    END LOOP;
-    -- Add aggregate column before removing the trailing comma
-    sql_text := sql_text || '
-        COUNT(r.id) as total_bookings';
-    sql_text := rtrim(sql_text, ',');
-    sql_text := sql_text || '
-    FROM rooms r
-    WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''14 days''
-    GROUP BY r.date
-    ORDER BY r.date';
-    EXECUTE sql_text;
-END;
-$$ LANGUAGE plpgsql;
-
-
--- ==========================================
--- Dynamic HTML matrix view for LG SuperSign (full HTML document per cell)
--- ==========================================
-DROP FUNCTION IF EXISTS create_foglalas_matrix_view() CASCADE;
-
-CREATE OR REPLACE FUNCTION create_foglalas_matrix_view()
-RETURNS void AS $$
-DECLARE
-    room_record RECORD;
-    sql_text TEXT;
-    room_columns TEXT;
-    default_row TEXT;
-BEGIN
-    DROP VIEW IF EXISTS foglalas_matrix_view;
-
-    -- Initialize variables
-    room_columns := '';
-    default_row := '';
-
-    sql_text := 'CREATE VIEW foglalas_matrix_view AS 
-    SELECT * FROM (
-        SELECT r.date,';
-
-    -- Add a column for each active room
-    FOR room_record IN 
-        SELECT value FROM settings WHERE category = 'room' AND active = true ORDER BY value
-    LOOP
-        sql_text := sql_text || '
-        ''<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .foglalas {
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-        .info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 62px;
-            font-weight: bold;
-            text-align: center;
-            margin: 40px 0;
-                }        
-        .row { display: flex; font-size: 18px; margin-bottom: 6px; }
-        .cell-ugyszam { width: 120px; font-weight: bold; font-size: 22px; }
-        .cell-ugyszam-adat { width: 100%; font-size: 22px; }
-        .cell-tanacs { width: 120px; font-weight: bold; font-size: 20px; }
-        .cell-tanacs-adat { width: 100%; font-size: 20px; }
-        .cell-date { width: 120px; font-weight: bold; font-size: 20px; }
-        .cell-start { width: 100px; font-weight: bold; font-size: 20px; }
-        .cell-end { width: 100px; font-weight: bold; font-size: 20px;}
-        .cell-date-adat { width: 120px; font-size: 20px;}
-        .cell-start-adat { width: 100px; font-size: 20px;}
-        .cell-end-adat { width: 100px; font-size: 20px;}
-        .cell-letszam { width: 80px; font-weight: bold; }
-        .cell-letszam-adat { width: 40px; }
-        .cell-alperes-terhelt { width: 200px; font-weight: bold; }
-        .cell-felperes-vadlo { width: 200px; font-weight: bold; }
-        .cell-alperes-terhelt-adat { width: 200px; }
-        .cell-felperes-vadlo-adat { width: 200px; }
-        .cell-targy { width: 80px; font-weight: bold; }
-        .cell-targy-adat { width: 100%; }
-        .bold { font-weight: bold; }
-    </style>
-    <title>foglalas</title>
-</head>
-<body>'' ||
-        COALESCE(
-            STRING_AGG(
-                CASE WHEN r.rooms = ''' || room_record.value || ''' 
-                    THEN COALESCE(r.foglalas, '''') 
-                END, 
-                E''<hr>''
-            ),
-            ''<div class="foglalas">JELLENLEG NINCS TÁRGYALÁS</div>''
-        ) ||
-        ''</body>
-</html>'' AS "' || room_record.value || '",';
-
-        -- Build default row columns
-        default_row := default_row || '''<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .foglalas {
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-        .info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 62px;
-            font-weight: bold;
-            text-align: center;
-            margin: 40px 0;
-                }  
-    </style>
-    <title>TÁRGYALÓ</title>
-</head>
-<body>
-    <div class="info">NINCS TÁRGYALÁS</div>
-</body>
-</html>'' AS "' || room_record.value || '",';
-    END LOOP;
-
-    -- Remove trailing comma from main query
-    sql_text := left(sql_text, length(sql_text) - 1);
-
-    -- Remove trailing comma from default row
-    default_row := left(default_row, length(default_row) - 1);
-
-    -- Complete the query with UNION for empty result
-    sql_text := sql_text || '
-        FROM rooms r
-        WHERE r.date = CURRENT_DATE
-          AND r.start_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
-        GROUP BY r.date
-
-        UNION ALL
-
-        SELECT CURRENT_DATE as date, ' || default_row || '
-        WHERE NOT EXISTS (
-            SELECT 1 FROM rooms r2 
-            WHERE r2.date = CURRENT_DATE 
-              AND r2.start_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
-        )
-    ) sub
-    ORDER BY date
-    LIMIT 4';
-
-    EXECUTE sql_text;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create the view
-SELECT create_foglalas_matrix_view();
-
--- ==========================================
--- Utility: Refresh all views
--- ==========================================
-CREATE OR REPLACE FUNCTION refresh_room_views()
-RETURNS void AS $$
-BEGIN
-    PERFORM create_room_schedule_view();
-    PERFORM create_room_schedule_html_view();
-END;
-$$ LANGUAGE plpgsql;
-
--- Create the views
-SELECT create_room_schedule_view();
-SELECT create_room_schedule_html_view();
-
--- ==========================================
--- Indexes for performance
--- ==========================================
-CREATE INDEX IF NOT EXISTS idx_rooms_date ON rooms(date);
-CREATE INDEX IF NOT EXISTS idx_rooms_date_rooms ON rooms(date, rooms);
-CREATE INDEX IF NOT EXISTS idx_rooms_start_time ON rooms(start_time);
-CREATE INDEX IF NOT EXISTS idx_settings_category ON settings(category);
-CREATE INDEX IF NOT EXISTS idx_settings_active ON settings(active);
-CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, active);
-
--- ==========================================
--- Update sequence values to prevent conflicts
--- ==========================================
-SELECT setval('name_id_seq', COALESCE((SELECT MAX(id) FROM name), 1));
-SELECT setval('rooms_id_seq', COALESCE((SELECT MAX(id) FROM rooms), 1));
-SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 576));
-
-
--- ==========================================
--- Add unique constraint to name table
--- ==========================================
-ALTER TABLE name ADD CONSTRAINT name_unique UNIQUE (name);
-
-
 -- =============================================
 -- Add basic datas to settings and rooms tables
 -- =============================================
@@ -794,4 +482,322 @@ INSERT INTO settings (id, category, value, sort_order, active) VALUES
 (573, 'tanacs', 'dr. Vavroh Géza', 0, TRUE),
 (574, 'tanacs', 'Kocsisné dr. Niedermüller Angelika', 0, TRUE),
 (575, 'tanacs', 'Redlné dr. Mészáros Ildikó', 0, TRUE);
-COMMIT;
+
+-- Remove duplicate room entries from settings
+DELETE FROM settings s1
+USING settings s2
+WHERE s1.id > s2.id 
+AND s1.category = 'room' 
+AND s1.value = s2.value 
+AND s1.active = s2.active;
+
+-- Drop functions if they exist (for idempotency)
+DROP FUNCTION IF EXISTS create_room_schedule_view() CASCADE;
+DROP FUNCTION IF EXISTS create_room_schedule_html_view() CASCADE;
+DROP FUNCTION IF EXISTS refresh_room_views() CASCADE;
+
+-- ==========================================
+-- Dynamic room schedule view (text summary)
+-- ==========================================
+CREATE OR REPLACE FUNCTION create_room_schedule_view()
+RETURNS void AS $$
+DECLARE
+    room_record RECORD;
+    sql_text TEXT;
+BEGIN
+    DROP VIEW IF EXISTS room_schedule_view;
+    sql_text := 'CREATE VIEW room_schedule_view AS SELECT 
+        r.date,
+        CASE 
+            WHEN EXTRACT(DOW FROM r.date) = 1 THEN ''Hétfő''
+            WHEN EXTRACT(DOW FROM r.date) = 2 THEN ''Kedd''
+            WHEN EXTRACT(DOW FROM r.date) = 3 THEN ''Szerda''
+            WHEN EXTRACT(DOW FROM r.date) = 4 THEN ''Csütörtök''
+            WHEN EXTRACT(DOW FROM r.date) = 5 THEN ''Péntek''
+            WHEN EXTRACT(DOW FROM r.date) = 6 THEN ''Szombat''
+            WHEN EXTRACT(DOW FROM r.date) = 0 THEN ''Vasárnap''
+        END as hungarian_day,';
+    FOR room_record IN 
+        SELECT DISTINCT value 
+        FROM settings 
+        WHERE category = 'room' AND active = true 
+        ORDER BY value
+    LOOP
+        sql_text := sql_text || '
+        STRING_AGG(
+            CASE WHEN r.rooms = ''' || room_record.value || ''' THEN 
+                TO_CHAR(r.start_time, ''HH24:MI'') || '' - '' || 
+                TO_CHAR(r.end_time, ''HH24:MI'') || E''\n'' ||
+                ''Foglalás: '' || COALESCE(r.foglalas, '''')
+            END, E''\n--- --- ---\n''
+        ) AS "' || room_record.value || '",';
+    END LOOP;
+    -- Add aggregate columns before removing the trailing comma
+    sql_text := sql_text || '
+        COUNT(r.id) as total_bookings,
+        MIN(r.start_time) as first_booking,
+        MAX(r.end_time) as last_booking';
+    -- Remove the last comma if present
+    sql_text := rtrim(sql_text, ',');
+    sql_text := sql_text || '
+    FROM rooms r
+    WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''30 days''
+    GROUP BY r.date
+    ORDER BY r.date';
+    EXECUTE sql_text;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ==========================================
+-- Dynamic HTML room schedule view (HTML summary)
+-- ==========================================
+CREATE OR REPLACE FUNCTION create_room_schedule_html_view()
+RETURNS void AS $$
+DECLARE
+    room_record RECORD;
+    sql_text TEXT;
+BEGIN
+    DROP VIEW IF EXISTS room_schedule_html_view;
+    sql_text := 'CREATE VIEW room_schedule_html_view AS SELECT 
+        r.date,
+        CASE 
+            WHEN EXTRACT(DOW FROM r.date) = 1 THEN ''Hétfő''
+            WHEN EXTRACT(DOW FROM r.date) = 2 THEN ''Kedd''
+            WHEN EXTRACT(DOW FROM r.date) = 3 THEN ''Szerda''
+            WHEN EXTRACT(DOW FROM r.date) = 4 THEN ''Csütörtök''
+            WHEN EXTRACT(DOW FROM r.date) = 5 THEN ''Péntek''
+            WHEN EXTRACT(DOW FROM r.date) = 6 THEN ''Szombat''
+            WHEN EXTRACT(DOW FROM r.date) = 0 THEN ''Vasárnap''
+        END as hungarian_day,';
+    -- Add a column for each active room with HTML formatting        
+    FOR room_record IN 
+        SELECT DISTINCT value 
+        FROM settings 
+        WHERE category = 'room' AND active = true 
+        ORDER BY value
+    LOOP
+        sql_text := sql_text || '
+        STRING_AGG(
+            CASE WHEN r.rooms = ''' || room_record.value || ''' THEN 
+                ''<div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin: 4px 0;">'' ||
+                ''<div style="font-weight: bold; color: #495057;">'' || 
+                TO_CHAR(r.start_time, ''HH24:MI'') || '' - '' || TO_CHAR(r.end_time, ''HH24:MI'') || ''</div>'' ||
+                ''<div style="color: #007bff;">Ügyszám: '' || COALESCE(r.ugyszam, '''') || ''</div>'' ||
+                ''<div style="color: #28a745;">Foglalás: '' || COALESCE(r.foglalas, '''') || ''</div>'' ||
+                ''</div>''
+            END, ''''
+        ) AS "' || room_record.value || '",';
+    END LOOP;
+    -- Add aggregate column before removing the trailing comma
+    sql_text := sql_text || '
+        COUNT(r.id) as total_bookings';
+    sql_text := rtrim(sql_text, ',');
+    sql_text := sql_text || '
+    FROM rooms r
+    WHERE r.date >= CURRENT_DATE AND r.date <= CURRENT_DATE + INTERVAL ''14 days''
+    GROUP BY r.date
+    ORDER BY r.date';
+    EXECUTE sql_text;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ==========================================
+-- Dynamic HTML matrix view for LG SuperSign (full HTML document per cell)
+-- ==========================================
+
+DROP FUNCTION IF EXISTS create_foglalas_matrix_view() CASCADE;
+
+CREATE OR REPLACE FUNCTION create_foglalas_matrix_view()
+RETURNS void AS $$
+DECLARE
+    room_record RECORD;
+    sql_text TEXT;
+    room_count INTEGER := 0;
+    default_html TEXT;
+    room_html TEXT;
+BEGIN
+    DROP VIEW IF EXISTS foglalas_matrix_view CASCADE;
+
+    -- Prepare HTML templates as variables (safer than inline)
+    default_html := '
+    <!DOCTYPE html>
+    <html lang="hu">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="600">
+        <style>
+            .foglalas {
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 16px;
+                width: 100%;
+                box-sizing: border-box;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
+            .info {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 62px;
+                font-weight: bold;
+                text-align: center;
+                margin: 40px 0;
+            }  
+        </style>
+        <title>TÁRGYALÓ</title>
+    </head>
+    <body>
+        <div class="info">NINCS TÁRGYALÁS</div>
+    </body>
+    </html>';
+    
+    room_html := '
+    <!DOCTYPE html>
+    <html lang="hu">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="600">
+        <style>
+            .foglalas {
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 16px;
+                width: 100%;
+                box-sizing: border-box;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
+            .info {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 62px;
+                font-weight: bold;
+                text-align: center;
+                margin: 40px 0;
+            }        
+            .row { display: flex; font-size: 20px; margin-bottom: 6px; }
+            .cell-ugyszam { width: 140px; font-weight: bold; font-size: 24px; }
+            .cell-ugyszam-adat { width: 100%; font-size: 24px; }
+            .cell-tanacs { width: 140px; font-weight: bold; font-size: 22px; }
+            .cell-tanacs-adat { width: 100%; font-size: 22px; }
+            .cell-date { width: 140px; font-weight: bold; font-size: 22px; }
+            .cell-start { width: 120px; font-weight: bold; font-size: 22px; }
+            .cell-end { width: 120px; font-weight: bold; font-size: 22px; }
+            .cell-date-adat { width: 140px; font-size: 22px; }
+            .cell-start-adat { width: 120px; font-size: 22px; }
+            .cell-end-adat { width: 120px; font-size: 22px; }
+            .cell-letszam { width: 100px; font-weight: bold; }
+            .cell-letszam-adat { width: 40px; }
+            .cell-alperes-terhelt { width: 240px; font-weight: bold; }
+            .cell-felperes-vadlo { width: 240px; font-weight: bold; }
+            .cell-alperes-terhelt-adat { width: 240px; }
+            .cell-felperes-vadlo-adat { width: 240px; }
+            .cell-targy { width: 80px; font-weight: bold; }
+            .cell-targy-adat { width: 100%; }
+            .bold { font-weight: bold; }
+        </style>
+        <title>';
+
+    -- Start building the query
+    sql_text := 'CREATE VIEW foglalas_matrix_view AS SELECT CURRENT_DATE as date';
+
+    -- Add a column for each active room
+    FOR room_record IN 
+        SELECT value FROM settings WHERE category = 'room' AND active = true ORDER BY value
+    LOOP
+        room_count := room_count + 1;
+        
+        -- Use format() for safer SQL generation with proper ordering and limit
+        sql_text := sql_text || format(', 
+        COALESCE((
+            SELECT %L || %L || %L || STRING_AGG(foglalas, '''' ORDER BY start_time) || %L
+            FROM (
+                SELECT foglalas, start_time
+                FROM rooms 
+                WHERE rooms = %L 
+                  AND date = CURRENT_DATE 
+                  AND end_time >= (CURRENT_TIME - INTERVAL ''1 hour'')
+                ORDER BY start_time
+                LIMIT 5
+            ) limited_rooms
+            WHERE foglalas IS NOT NULL
+        ), %L) AS %I',
+        room_html, -- HTML start
+        room_record.value, -- title
+        '</title></head><body>', -- HTML middle
+        '</body></html>', -- HTML end
+        room_record.value, -- room filter
+        default_html, -- fallback HTML
+        room_record.value -- column name
+        );
+    END LOOP;
+
+    -- Only create view if we have rooms
+    IF room_count > 0 THEN
+        EXECUTE sql_text;
+        RAISE NOTICE 'foglalas_matrix_view created successfully with % rooms', room_count;
+    ELSE
+        RAISE NOTICE 'No active rooms found, creating minimal view';
+        EXECUTE 'CREATE VIEW foglalas_matrix_view AS SELECT CURRENT_DATE as date, ''No rooms configured'' as status';
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error creating foglalas_matrix_view: %', SQLERRM;
+        -- Create a fallback view so the system doesn't break
+        BEGIN
+            EXECUTE 'CREATE VIEW foglalas_matrix_view AS SELECT CURRENT_DATE as date, ''Error creating view'' as error_message';
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE NOTICE 'Failed to create fallback view: %', SQLERRM;
+        END;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the view
+SELECT create_foglalas_matrix_view();
+
+-- ==========================================
+-- Utility: Refresh all views
+-- ==========================================
+CREATE OR REPLACE FUNCTION refresh_room_views()
+RETURNS void AS $$
+BEGIN
+    PERFORM create_room_schedule_view();
+    PERFORM create_room_schedule_html_view();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the views
+SELECT create_room_schedule_view();
+SELECT create_room_schedule_html_view();
+
+-- ==========================================
+-- Indexes for performance
+-- ==========================================
+CREATE INDEX IF NOT EXISTS idx_rooms_date ON rooms(date);
+CREATE INDEX IF NOT EXISTS idx_rooms_date_rooms ON rooms(date, rooms);
+CREATE INDEX IF NOT EXISTS idx_rooms_start_time ON rooms(start_time);
+CREATE INDEX IF NOT EXISTS idx_settings_category ON settings(category);
+CREATE INDEX IF NOT EXISTS idx_settings_active ON settings(active);
+CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, active);
+
+-- ==========================================
+-- Update sequence values to prevent conflicts
+-- ==========================================
+SELECT setval('name_id_seq', COALESCE((SELECT MAX(id) FROM name), 1));
+SELECT setval('rooms_id_seq', COALESCE((SELECT MAX(id) FROM rooms), 1));
+SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 576));
+
+
+-- ==========================================
+-- Add unique constraint to name table
+-- ==========================================
+ALTER TABLE name ADD CONSTRAINT name_unique UNIQUE (name);
+
+
