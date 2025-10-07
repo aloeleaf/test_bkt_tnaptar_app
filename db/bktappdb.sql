@@ -762,6 +762,51 @@ $$ LANGUAGE plpgsql;
 -- Create the view
 SELECT create_foglalas_matrix_view();
 
+
+-- ==========================================
+-- Trigger to auto-refresh foglalas_matrix_view when rooms change
+-- ==========================================
+
+DROP FUNCTION IF EXISTS refresh_foglalas_matrix_on_room_change() CASCADE;
+
+CREATE OR REPLACE FUNCTION refresh_foglalas_matrix_on_room_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only refresh if the change is related to rooms
+    IF (TG_OP = 'DELETE' AND OLD.category = 'room') OR
+       (TG_OP IN ('INSERT', 'UPDATE') AND NEW.category = 'room') THEN
+        
+        -- Call the function to recreate the view
+        PERFORM create_foglalas_matrix_view();
+        
+        RAISE NOTICE 'foglalas_matrix_view refreshed due to room change (operation: %)', TG_OP;
+    END IF;
+    
+    -- Return appropriate value based on operation
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    ELSE
+        RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop trigger if exists
+DROP TRIGGER IF EXISTS trigger_refresh_foglalas_matrix ON settings;
+
+-- Create trigger on settings table
+CREATE TRIGGER trigger_refresh_foglalas_matrix
+AFTER INSERT OR UPDATE OR DELETE ON settings
+FOR EACH ROW
+EXECUTE FUNCTION refresh_foglalas_matrix_on_room_change();
+
+-- Log trigger creation
+DO $$
+BEGIN
+    RAISE NOTICE 'Trigger trigger_refresh_foglalas_matrix created successfully on settings table';
+END $$;
+
+
 -- ==========================================
 -- Utility: Refresh all views
 -- ==========================================
@@ -770,6 +815,7 @@ RETURNS void AS $$
 BEGIN
     PERFORM create_room_schedule_view();
     PERFORM create_room_schedule_html_view();
+    PERFORM create_foglalas_matrix_view();
 END;
 $$ LANGUAGE plpgsql;
 
