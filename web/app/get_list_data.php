@@ -1,5 +1,4 @@
 <?php
-// filepath: \srv\containers\test_bkt_tnaptar_app\web\app\get_list_data.php
 ob_start();
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -49,9 +48,6 @@ try {
         $end_time = $row['end_time'] ?? '';
         $formatted_end_time = $end_time ? substr($end_time, 0, 5) : '';
 
-        // Split subject into parts for backward compatibility
-        $subject_parts = explode("\n", $row['subject'] ?? '');
-
         // Konzisztens mezőnevek használata
         return [
             'id' => $row['id'] ?? '',
@@ -59,15 +55,12 @@ try {
             'council_name' => $row['tanacs'] ?? '',
             'session_date' => $row['date'] ?? '',
             'room_number' => $row['rooms'] ?? '',
-            'ido' => $formatted_start_time, // For list.php compatibility
-            'kezd_ido' => $formatted_start_time, // For edit form
+            'kezd_ido' => $formatted_start_time,
             'befejez_ido' => $formatted_end_time,
             'ugyszam' => $row['ugyszam'] ?? '',
             'persons' => $row['resztvevok'] ?? '',
-            'azon' => $row['letszam'] ?? '',
-            'ugyminoseg' => $subject_parts[0] ?? '', // First line of subject
-            'intezkedes' => $subject_parts[1] ?? '', // Second line of subject
-            'subject' => $row['subject'] ?? '',   // Full subject for edit form
+            'letszam' => $row['letszam'] ?? '',
+            'subject' => $row['subject'] ?? '',
             'alperes_terhelt' => $row['alperes_terhelt'] ?? '',
             'felperes_vadlo' => $row['felperes_vadlo'] ?? '',
         ];

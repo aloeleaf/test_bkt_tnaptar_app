@@ -106,6 +106,7 @@ INSERT INTO settings (id, category, value, sort_order, active) VALUES
 (154, 'room', 'BKT_A_54T', 0, TRUE),
 (200, 'room', 'BKT_B_01T', 0, TRUE),
 -- Tanácsok
+(300, 'tanacs', 'dr. Szente László', 0, TRUE),
 
 
 -- Remove duplicate room entries from settings

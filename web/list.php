@@ -1,6 +1,4 @@
 <?php
-// filepath: \srv\containers\test_bkt_tnaptar_app\web\list.php
-
 // Betöltjük a configot és a Database osztályt
 $config = require __DIR__ . '/config/config.php';
 require_once __DIR__ . '/app/Database.php';
@@ -42,9 +40,6 @@ $filtered_entries = array_map(function ($row) {
     $formatted_start_time = $start_time ? substr($start_time, 0, 5) : '';
     $formatted_end_time = $end_time ? substr($end_time, 0, 5) : '';
     
-    // Split subject into parts
-    $subject_parts = explode("\n", $row['subject'] ?? '');
-    
     return [
         'court_name'     => $row['birosag'] ?? '',
         'council_name'   => $row['tanacs'] ?? '',
@@ -52,14 +47,13 @@ $filtered_entries = array_map(function ($row) {
         'room_number'    => $row['rooms'] ?? '',
         'kezd_ido'       => $formatted_start_time,
         'befejez_ido'    => $formatted_end_time,
-        'ido'            => $formatted_start_time, // Backward compatibility
         'ugyszam'        => $row['ugyszam'] ?? '',
         'persons'        => $row['resztvevok'] ?? '',
         'alperes_terhelt'=> $row['alperes_terhelt'] ?? '',
         'felperes_vadlo' => $row['felperes_vadlo'] ?? '',
-        'azon'           => $row['letszam'] ?? '', 
+        'letszam'        => $row['letszam'] ?? '', 
+        'subject'        => $row['subject'] ?? '',
         'id'             => $row['id'] ?? '', 
-        'ugyminoseg'     => $subject_parts[0] ?? '',
     ];
 }, $rows);
 ?>
@@ -131,10 +125,10 @@ $filtered_entries = array_map(function ($row) {
                                 <div class="col-12 mb-2"><strong title="Felperes vagy vádló neve.">Felperes/Vádló:</strong> <?= htmlspecialchars($data['felperes_vadlo'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">
-                                <div class="col-12 mb-2"><strong title="Az idézettek szám.">Idézettek száma:</strong> <?= htmlspecialchars($data['azon'] ?? 'N/A'); ?></div>
+                                <div class="col-12 mb-2"><strong title="Az idézettek száma.">Idézettek száma:</strong> <?= htmlspecialchars($data['letszam'] ?? 'N/A'); ?></div>
                             </div>
                             <div class="row">
-                                <div class="col-12 mb-2"><strong title="Az ügy minősítése vagy típusa.">Ügyminőség:</strong> <?= nl2br(htmlspecialchars($data['ugyminoseg'] ?? 'N/A')); ?></div>
+                                <div class="col-12 mb-2"><strong title="A tárgyalás tárgya vagy leírása.">Tárgy:</strong> <?= nl2br(htmlspecialchars($data['subject'] ?? 'N/A')); ?></div>
                             </div>
                         </div>
                         <div class="card-footer text-center">
