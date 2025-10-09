@@ -1,19 +1,44 @@
+-- ==========================================
+-- BKT Naptár Database Schema
+-- Budapest Környéki Törvényszék - Court Room Booking System
+-- ==========================================
+
 -- Set timezone for the session
 SET timezone = 'Europe/Budapest';
 
 -- Drop tables if they exist (for idempotency)
+DROP TABLE IF EXISTS login_attempts CASCADE;
 DROP TABLE IF EXISTS name CASCADE;
 DROP TABLE IF EXISTS rooms CASCADE;
 DROP TABLE IF EXISTS settings CASCADE;
 
--- Table: name (user login data)
-CREATE TABLE name (
+-- ==========================================
+-- Table: login_attempts (rate limiting & security audit)
+-- ✅ NEW: Required for Auth.php rate limiting
+-- ==========================================
+CREATE TABLE login_attempts (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    last_login VARCHAR(255) NOT NULL
+    username VARCHAR(255) NOT NULL,
+    success BOOLEAN NOT NULL DEFAULT FALSE,
+    attempt_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    user_agent TEXT
 );
 
+-- ==========================================
+-- Table: name (user login data)
+-- ✅ FIXED: Changed last_login to TIMESTAMP
+-- ✅ FIXED: Added UNIQUE constraint inline
+-- ==========================================
+CREATE TABLE name (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
 -- Table: rooms (court reservations)
+-- ==========================================
 CREATE TABLE rooms (
     id SERIAL PRIMARY KEY,
     birosag VARCHAR(255) NOT NULL,
@@ -32,7 +57,9 @@ CREATE TABLE rooms (
     UNIQUE(date, rooms, start_time)
 );
 
+-- ==========================================
 -- Table: settings (dropdown values for UI)
+-- ==========================================
 CREATE TABLE settings (
     id SERIAL PRIMARY KEY,
     category VARCHAR(100) NOT NULL,
@@ -41,15 +68,19 @@ CREATE TABLE settings (
     active BOOLEAN DEFAULT NULL
 );
 
-
 -- =============================================
--- Add basic datas to settings and rooms tables
+-- Add basic data to settings table
 -- =============================================
 INSERT INTO settings (id, category, value, sort_order, active) VALUES
+-- Courts
 (11, 'birosag', 'Budapest Környéki Törvényszék', 0, TRUE),
 (12, 'birosag', 'Érdi Járásbíróság', 0, TRUE),
+
+-- Participant types
 (50, 'resztvevok', 'Alperes - Felperes', 0, TRUE),
 (51, 'resztvevok', 'Terhelt - Vádló', 0, TRUE),
+
+-- Courtrooms (BKT_A_01T to BKT_A_54T)
 (101, 'room', 'BKT_A_01T', 0, TRUE),
 (102, 'room', 'BKT_A_02T', 0, TRUE),
 (103, 'room', 'BKT_A_03T', 0, TRUE),
@@ -105,9 +136,9 @@ INSERT INTO settings (id, category, value, sort_order, active) VALUES
 (153, 'room', 'BKT_A_53T', 0, TRUE),
 (154, 'room', 'BKT_A_54T', 0, TRUE),
 (200, 'room', 'BKT_B_01T', 0, TRUE),
--- Tanácsok
-(300, 'tanacs', 'dr. Szente László', 0, TRUE),
 
+-- Councils
+(300, 'tanacs', 'dr. Szente László', 0, TRUE);
 
 -- Remove duplicate room entries from settings
 DELETE FROM settings s1
@@ -117,12 +148,36 @@ AND s1.category = 'room'
 AND s1.value = s2.value 
 AND s1.active = s2.active;
 
+-- ==========================================
 -- Drop functions if they exist (for idempotency)
+-- ==========================================
+DROP FUNCTION IF EXISTS cleanup_old_login_attempts() CASCADE;
 DROP FUNCTION IF EXISTS create_room_schedule_view() CASCADE;
 DROP FUNCTION IF EXISTS create_room_schedule_html_view() CASCADE;
+DROP FUNCTION IF EXISTS create_foglalas_matrix_view() CASCADE;
 DROP FUNCTION IF EXISTS refresh_room_views() CASCADE;
+DROP FUNCTION IF EXISTS refresh_foglalas_matrix_on_room_change() CASCADE;
 
 -- ==========================================
+-- Function: cleanup_old_login_attempts
+-- ✅ NEW: Cleanup old login attempt records
+-- ==========================================
+CREATE OR REPLACE FUNCTION cleanup_old_login_attempts()
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    DELETE FROM login_attempts 
+    WHERE attempt_time < NOW() - INTERVAL '30 days';
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RAISE NOTICE 'Deleted % old login attempts', deleted_count;
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ==========================================
+-- Function: create_room_schedule_view
 -- Dynamic room schedule view (text summary)
 -- ==========================================
 CREATE OR REPLACE FUNCTION create_room_schedule_view()
@@ -175,6 +230,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ==========================================
+-- Function: create_room_schedule_html_view
 -- Dynamic HTML room schedule view (HTML summary)
 -- ==========================================
 CREATE OR REPLACE FUNCTION create_room_schedule_html_view()
@@ -227,13 +283,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 -- ==========================================
+-- Function: create_foglalas_matrix_view
 -- Dynamic HTML matrix view for LG SuperSign (full HTML document per cell)
 -- ==========================================
-
-DROP FUNCTION IF EXISTS create_foglalas_matrix_view() CASCADE;
-
 CREATE OR REPLACE FUNCTION create_foglalas_matrix_view()
 RETURNS void AS $$
 DECLARE
@@ -385,16 +438,10 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
--- Create the view
-SELECT create_foglalas_matrix_view();
-
-
 -- ==========================================
+-- Function: refresh_foglalas_matrix_on_room_change
 -- Trigger to auto-refresh foglalas_matrix_view when rooms change
 -- ==========================================
-
-DROP FUNCTION IF EXISTS refresh_foglalas_matrix_on_room_change() CASCADE;
-
 CREATE OR REPLACE FUNCTION refresh_foglalas_matrix_on_room_change()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -426,14 +473,8 @@ AFTER INSERT OR UPDATE OR DELETE ON settings
 FOR EACH ROW
 EXECUTE FUNCTION refresh_foglalas_matrix_on_room_change();
 
--- Log trigger creation
-DO $$
-BEGIN
-    RAISE NOTICE 'Trigger trigger_refresh_foglalas_matrix created successfully on settings table';
-END $$;
-
-
 -- ==========================================
+-- Function: refresh_room_views
 -- Utility: Refresh all views
 -- ==========================================
 CREATE OR REPLACE FUNCTION refresh_room_views()
@@ -442,19 +483,31 @@ BEGIN
     PERFORM create_room_schedule_view();
     PERFORM create_room_schedule_html_view();
     PERFORM create_foglalas_matrix_view();
+    RAISE NOTICE 'All room views refreshed successfully';
 END;
 $$ LANGUAGE plpgsql;
 
--- Create the views
+-- ==========================================
+-- Create the initial views
+-- ==========================================
 SELECT create_room_schedule_view();
 SELECT create_room_schedule_html_view();
+SELECT create_foglalas_matrix_view();
 
 -- ==========================================
 -- Indexes for performance
 -- ==========================================
+-- login_attempts indexes
+CREATE INDEX IF NOT EXISTS idx_login_attempts_username_time ON login_attempts(username, attempt_time);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_time ON login_attempts(attempt_time);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON login_attempts(ip_address);
+
+-- rooms indexes
 CREATE INDEX IF NOT EXISTS idx_rooms_date ON rooms(date);
 CREATE INDEX IF NOT EXISTS idx_rooms_date_rooms ON rooms(date, rooms);
 CREATE INDEX IF NOT EXISTS idx_rooms_start_time ON rooms(start_time);
+
+-- settings indexes
 CREATE INDEX IF NOT EXISTS idx_settings_category ON settings(category);
 CREATE INDEX IF NOT EXISTS idx_settings_active ON settings(active);
 CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, active);
@@ -462,14 +515,38 @@ CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, ac
 -- ==========================================
 -- Update sequence values to prevent conflicts
 -- ==========================================
+SELECT setval('login_attempts_id_seq', COALESCE((SELECT MAX(id) FROM login_attempts), 1));
 SELECT setval('name_id_seq', COALESCE((SELECT MAX(id) FROM name), 1));
 SELECT setval('rooms_id_seq', COALESCE((SELECT MAX(id) FROM rooms), 1));
 SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 576));
 
-
 -- ==========================================
--- Add unique constraint to name table
+-- Log completion
 -- ==========================================
-ALTER TABLE name ADD CONSTRAINT name_unique UNIQUE (name);
-
-
+DO $$
+BEGIN
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'BKT Naptár Database Schema Created';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Tables:';
+    RAISE NOTICE '  ✅ login_attempts (NEW - rate limiting)';
+    RAISE NOTICE '  ✅ name (FIXED - TIMESTAMP for last_login)';
+    RAISE NOTICE '  ✅ rooms';
+    RAISE NOTICE '  ✅ settings';
+    RAISE NOTICE 'Views:';
+    RAISE NOTICE '  ✅ room_schedule_view';
+    RAISE NOTICE '  ✅ room_schedule_html_view';
+    RAISE NOTICE '  ✅ foglalas_matrix_view';
+    RAISE NOTICE 'Functions:';
+    RAISE NOTICE '  ✅ cleanup_old_login_attempts (NEW)';
+    RAISE NOTICE '  ✅ create_room_schedule_view';
+    RAISE NOTICE '  ✅ create_room_schedule_html_view';
+    RAISE NOTICE '  ✅ create_foglalas_matrix_view';
+    RAISE NOTICE '  ✅ refresh_foglalas_matrix_on_room_change';
+    RAISE NOTICE '  ✅ refresh_room_views';
+    RAISE NOTICE 'Triggers:';
+    RAISE NOTICE '  ✅ trigger_refresh_foglalas_matrix';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Database ready for use!';
+    RAISE NOTICE '========================================';
+END $$;
