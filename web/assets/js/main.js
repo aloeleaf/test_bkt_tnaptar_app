@@ -310,48 +310,38 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
     // Funkció a szerkesztő űrlap adatainak betöltésére
-async function loadEditFormData(entryId) {
-    try {
-        const response = await fetch(`app/get_list_data.php`);
-        const result = await response.json();
+    async function loadEditFormData(entryId) {
+        try {
+            // Use the correct API endpoint for editing!
+            const response = await fetch(`app/edit_entry_api.php?id=${entryId}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
 
-        if (result.success) {
-            const entry = result.data.find(item => item.id == entryId);
-            if (entry) {
-                console.log('Entry data:', entry); // Debug log
-                console.log('Entry persons value:', entry.persons); // This is the correct field!
-
-                // Populate form fields
-                document.getElementById('editEntryId').value = entry.id;
-
-                // Set dropdown values - USE entry.persons (not entry.resztvevok)
-                setSelectedOption(document.getElementById('editBirosag'), entry.court_name);
-                setSelectedOption(document.getElementById('editTanacs'), entry.council_name);
-                setSelectedOption(document.getElementById('editRooms'), entry.room_number);
-                setSelectedOption(document.getElementById('editResztvevok'), entry.persons); // Fixed!
-
-                // Set other field values
-                document.getElementById('editDate').value = entry.session_date || '';
-                document.getElementById('editStartTime').value = entry.ido || '';
-                document.getElementById('editEndTime').value = entry.befejez_ido || '';
+            if (result.success && result.data) {
+                const entry = result.data;
+                // Populate form fields with correct field names
+                document.getElementById('editEntryId').value = entry.id || '';
+                setSelectedOption(document.getElementById('editBirosag'), entry.birosag);
+                setSelectedOption(document.getElementById('editTanacs'), entry.tanacs);
+                setSelectedOption(document.getElementById('editRooms'), entry.rooms);
+                setSelectedOption(document.getElementById('editResztvevok'), entry.resztvevok);
+                document.getElementById('editDate').value = entry.date || '';
+                document.getElementById('editStartTime').value = entry.start_time ? entry.start_time.substring(0,5) : '';
+                document.getElementById('editEndTime').value = entry.end_time ? entry.end_time.substring(0,5) : '';
                 document.getElementById('editUgyszam').value = entry.ugyszam || '';
                 document.getElementById('editAlperesTerhelt').value = entry.alperes_terhelt || '';
                 document.getElementById('editFelperesVadlo').value = entry.felperes_vadlo || '';
-                document.getElementById('editLetszam').value = entry.azon || '';
-                document.getElementById('editSubject').value = (entry.ugyminoseg || '') + '\n' + (entry.intezkedes || '');
+                document.getElementById('editLetszam').value = entry.letszam || '';
+                document.getElementById('editSubject').value = entry.subject || '';
             } else {
-                throw new Error('Bejegyzés nem található');
+                throw new Error(result.message || 'Bejegyzés nem található');
             }
-        } else {
-            throw new Error(result.message || 'Hiba az adatok betöltésekor');
+        } catch (error) {
+            console.error('Error loading entry data:', error);
+            showMessage('editMessage', 'Hiba az adatok betöltésekor: ' + error.message, 'danger');
         }
-    } catch (error) {
-        console.error('Error loading entry data:', error);
-        showMessage('editMessage', 'Hiba az adatok betöltésekor: ' + error.message, 'danger');
     }
-}
 
     // Funkció a szerkesztő űrlap adatainak betöltésére és kezelésére (legacy - rogzites.php-hoz)
     function loadEditData(id) {
