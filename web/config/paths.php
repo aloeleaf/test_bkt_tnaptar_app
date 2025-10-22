@@ -1,4 +1,4 @@
 <?php
 return [
-    'base_url' => 'https://test_tnaptar.bpkornyekitvsz.birosagiad.hu',
+    'base_url' => 'http://test_tnaptar.bpkornyekitvsz.birosagiad.hu',
 ];
