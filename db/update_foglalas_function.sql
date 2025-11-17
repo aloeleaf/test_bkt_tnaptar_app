@@ -101,29 +101,29 @@ BEGIN
                 display: flex; 
                 font-size: 20px; 
                 margin-bottom: 6px;
-                color: #000;  /* 🎨 Default text color */
+                color: #000000ff;  /* 🎨 Default text color */
             }
             .cell-ugyszam { 
                 width: 140px; 
                 font-weight: bold; 
                 font-size: 24px;
-                color: #0056b3;  /* 🎨 Case number color */
+                color: #dc3545;;  /* 🎨 Case number color */
             }
             .cell-ugyszam-adat { 
                 width: 100%; 
                 font-size: 24px;
-                color: #0056b3;  /* 🎨 Case number data color */
+                color: #dc3545;;  /* 🎨 Case number data color */
             }
             .cell-tanacs { 
                 width: 140px; 
                 font-weight: bold; 
                 font-size: 22px;
-                color: #495057;  /* 🎨 Council label color */
+                color: #000000ff;  /* 🎨 Council label color */
             }
             .cell-tanacs-adat { 
                 width: 100%; 
                 font-size: 22px;
-                color: #495057;  /* 🎨 Council data color */
+                color: #000000ff;  /* 🎨 Council data color */
             }
             .cell-date { 
                 width: 140px; 
@@ -135,7 +135,7 @@ BEGIN
                 width: 120px; 
                 font-weight: bold; 
                 font-size: 22px;
-                color: #28a745;  /* 🎨 Start time label color */
+                color: #dc3545;  /* 🎨 Start time label color */
             }
             .cell-end { 
                 width: 120px; 
@@ -151,7 +151,7 @@ BEGIN
             .cell-start-adat { 
                 width: 120px; 
                 font-size: 22px;
-                color: #28a745;  /* 🎨 Start time data color */
+                color: #dc3545;  /* 🎨 Start time data color */
             }
             .cell-end-adat { 
                 width: 120px; 
@@ -161,38 +161,38 @@ BEGIN
             .cell-letszam { 
                 width: 100px; 
                 font-weight: bold;
-                color: #6c757d;  /* 🎨 Participant count label color */
+                color: #000000ff;  /* 🎨 Participant count label color */
             }
             .cell-letszam-adat { 
                 width: 40px;
-                color: #6c757d;  /* 🎨 Participant count data color */
+                color: #000000ff;  /* 🎨 Participant count data color */
             }
             .cell-alperes-terhelt { 
                 width: 240px; 
                 font-weight: bold;
-                color: #fd7e14;  /* 🎨 Defendant label color */
+                color: #000000ff;  /* 🎨 Defendant label color */
             }
             .cell-felperes-vadlo { 
                 width: 240px; 
                 font-weight: bold;
-                color: #17a2b8;  /* 🎨 Plaintiff label color */
+                color: #000000ff;  /* 🎨 Plaintiff label color */
             }
             .cell-alperes-terhelt-adat { 
                 width: 240px;
-                color: #fd7e14;  /* 🎨 Defendant data color */
+                color: #000000ff;  /* 🎨 Defendant data color */
             }
             .cell-felperes-vadlo-adat { 
                 width: 240px;
-                color: #17a2b8;  /* 🎨 Plaintiff data color */
+                color: #000000ff;  /* 🎨 Plaintiff data color */
             }
             .cell-targy { 
                 width: 80px; 
                 font-weight: bold;
-                color: #6610f2;  /* 🎨 Subject label color */
+                color: #000000ff;  /* 🎨 Subject label color */
             }
             .cell-targy-adat { 
                 width: 100%;
-                color: #6610f2;  /* 🎨 Subject data color */
+                color: #000000ff;  /* 🎨 Subject data color */
             }
             .bold { 
                 font-weight: bold; 

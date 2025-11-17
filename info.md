@@ -9,7 +9,9 @@ This document provides an overview of the directory and file structure for the `
 
 ## Main Folders
 - `db/`: Database scripts and info.
-  - `bktappdb.sql`, `load_data.sql`, etc.
+  - `bktappdb.sql`: Main database schema with tables, functions, views, and triggers
+  - `update_foglalas_function.sql`: Update script for modifying HTML/CSS styles in `foglalas_matrix_view`
+  - `load_data.sql`, etc.
 - `docker-compose/`: Docker Compose configuration files.
   - `app-base.yml`, `build/`, `db/`
 - `error_list/`: Error documentation and advice.
@@ -24,14 +26,22 @@ This document provides an overview of the directory and file structure for the `
   - `assets/`: Static assets (CSS, JS, images, fonts).
   - `config/`: App configuration files.
   - `includes/`: Common includes (header, footer).
-  - `phpMyAdmin/`: phpMyAdmin tool and related files.
 
 ## Notable Subfolders
 - `web/app/`: Contains API endpoints and backend logic.
 - `web/assets/`: Contains static files for frontend (Bootstrap, FontAwesome, custom CSS/JS).
 - `web/config/`: Configuration for the web app.
 - `web/includes/`: Shared PHP includes.
-- `web/phpMyAdmin/`: Third-party phpMyAdmin tool.
+
+## Modifying HTML/CSS Styles
+To update the HTML/CSS styles for the `foglalas_matrix_view`:
+1. Edit `/srv/containers/test_bkt_tnaptar_app/db/update_foglalas_function.sql`
+2. Modify the CSS in the `default_html` and `room_html` sections (look for 🎨 markers)
+3. Run the script:
+   ```bash
+   docker cp /srv/containers/test_bkt_tnaptar_app/db/update_foglalas_function.sql db:/tmp/
+   docker exec -i db psql -U <username> -d bktappdb -f /tmp/update_foglalas_function.sql
+   ```
 
 ## Example Structure
 ```
