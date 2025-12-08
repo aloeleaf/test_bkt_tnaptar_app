@@ -12,6 +12,7 @@ return [
     'ldap_server'         => getenv('LDAP_SERVER'),
     'ldap_domain'         => getenv('LDAP_DOMAIN'),
     'ldap_base_dn'        => getenv('LDAP_BASE_DN'),
-    'ldap_required_groups'=> array_filter(array_map('trim', explode(',', getenv('LDAP_REQUIRED_GROUPS') ?: '')))
+    'ldap_required_groups'=> array_filter(array_map('trim', explode(',', getenv('LDAP_REQUIRED_GROUPS') ?: ''))),
+    'ldap_delete_group'   => getenv('LDAP_DELETE_GROUP') ?: 'BKT_Naptar_Admin' // AD group for delete permissions
 ];
 ?>

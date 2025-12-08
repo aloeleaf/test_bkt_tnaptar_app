@@ -135,5 +135,26 @@ class Auth
 
         session_destroy();
     }
+
+    /**
+     * Check if the current user has delete permissions
+     * User must be in the delete group specified in config
+     */
+    public static function canDelete()
+    {
+        if (!self::isAuthenticated()) {
+            return false;
+        }
+
+        $config = require __DIR__ . '/../config/config.php';
+        $deleteGroup = $config['ldap_delete_group'] ?? null;
+
+        if (empty($deleteGroup)) {
+            return false;
+        }
+
+        $userGroups = $_SESSION['groups'] ?? [];
+        return in_array($deleteGroup, $userGroups);
+    }
 }
 ?>

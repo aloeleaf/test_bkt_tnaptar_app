@@ -1,11 +1,16 @@
 <?php
 // Betöltjük a configot és a Database osztályt
+session_start();
 $config = require __DIR__ . '/config/config.php';
 require_once __DIR__ . '/app/Database.php';
+require_once __DIR__ . '/app/Auth.php';
 
 // Adatbázis kapcsolat létrehozása
 $db = new Database($config);
 $pdo = $db->getPdo();
+
+// Check if user has delete permissions
+$canDelete = Auth::canDelete();
 
 // Safe ORDER BY mapping - prevents SQL injection
 $orderOptions = [
@@ -60,6 +65,22 @@ $filtered_entries = array_map(function ($row) {
 
 <div class="container mt-5">
     <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptár lista</h1>
+
+    <?php if (isset($_SESSION['success_message'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle"></i> <?= htmlspecialchars($_SESSION['success_message']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error_message'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-exclamation-circle"></i> <?= htmlspecialchars($_SESSION['error_message']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
 
     <div class="row mb-4 align-items-center">
         <div class="col-md-7">
@@ -136,6 +157,11 @@ $filtered_entries = array_map(function ($row) {
                                 <a href="#" class="btn btn-primary btn-sm edit-button" data-id="<?= htmlspecialchars($data['id']); ?>">
                                     <i class="fa-solid fa-edit"></i> Szerkesztés
                                 </a>
+                                <?php if ($canDelete): ?>
+                                    <a href="delete_entry.php?id=<?= htmlspecialchars($data['id']); ?>" class="btn btn-danger btn-sm ms-2">
+                                        <i class="fa-solid fa-trash"></i> Törlés
+                                    </a>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span class="text-muted">Nincs azonosító a szerkesztéshez</span>
                             <?php endif; ?>

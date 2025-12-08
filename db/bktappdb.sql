@@ -307,6 +307,13 @@ BEGIN
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="refresh" content="600">
         <style>
+            body {
+                font-family: Arial, sans-serif;
+                color: white;                 
+                margin: 0;
+                padding: 0;
+                background-color: #000000;
+            }
             .foglalas {
                 border: 1px solid #ccc;
                 border-radius: 6px;
@@ -322,6 +329,7 @@ BEGIN
                 justify-content: center;
                 font-size: 62px;
                 font-weight: bold;
+                color: #ffffff;  /* 🎨 White text for black background */
                 text-align: center;
                 margin: 40px 0;
             }  
@@ -341,6 +349,13 @@ BEGIN
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="refresh" content="600">
         <style>
+            body {
+                font-family: Arial, sans-serif;
+                color: black;                 
+                margin: 0;
+                padding: 0;
+                background-color: #ffffffff;
+            }            
             .foglalas {
                 border: 1px solid #ccc;
                 border-radius: 6px;
@@ -359,26 +374,106 @@ BEGIN
                 text-align: center;
                 margin: 40px 0;
             }        
-            .row { display: flex; font-size: 20px; margin-bottom: 6px; }
-            .cell-ugyszam { width: 140px; font-weight: bold; font-size: 24px; }
-            .cell-ugyszam-adat { width: 100%; font-size: 24px; }
-            .cell-tanacs { width: 140px; font-weight: bold; font-size: 22px; }
-            .cell-tanacs-adat { width: 100%; font-size: 22px; }
-            .cell-date { width: 140px; font-weight: bold; font-size: 22px; }
-            .cell-start { width: 120px; font-weight: bold; font-size: 22px; }
-            .cell-end { width: 120px; font-weight: bold; font-size: 22px; }
-            .cell-date-adat { width: 140px; font-size: 22px; }
-            .cell-start-adat { width: 120px; font-size: 22px; }
-            .cell-end-adat { width: 120px; font-size: 22px; }
-            .cell-letszam { width: 100px; font-weight: bold; }
-            .cell-letszam-adat { width: 40px; }
-            .cell-alperes-terhelt { width: 240px; font-weight: bold; }
-            .cell-felperes-vadlo { width: 240px; font-weight: bold; }
-            .cell-alperes-terhelt-adat { width: 240px; }
-            .cell-felperes-vadlo-adat { width: 240px; }
-            .cell-targy { width: 80px; font-weight: bold; }
-            .cell-targy-adat { width: 100%; }
-            .bold { font-weight: bold; }
+            .row { 
+                display: flex; 
+                font-size: 20px; 
+                margin-bottom: 6px;
+                color: #000000ff;  /* 🎨 Default text color */
+            }
+            .cell-ugyszam { 
+                width: 140px; 
+                font-weight: bold; 
+                font-size: 24px;
+                color: #dc3545;  /* 🎨 Case number color */
+            }
+            .cell-ugyszam-adat { 
+                width: 100%; 
+                font-size: 24px;
+                color: #dc3545;  /* 🎨 Case number data color */
+            }
+            .cell-tanacs { 
+                width: 140px; 
+                font-weight: bold; 
+                font-size: 22px;
+                color: #000000ff;  /* 🎨 Council label color */
+            }
+            .cell-tanacs-adat { 
+                width: 100%; 
+                font-size: 22px;
+                color: #000000ff;  /* 🎨 Council data color */
+            }
+            .cell-date { 
+                width: 140px; 
+                font-weight: bold; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 Date label color */
+            }
+            .cell-start { 
+                width: 120px; 
+                font-weight: bold; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 Start time label color */
+            }
+            .cell-end { 
+                width: 120px; 
+                font-weight: bold; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 End time label color */
+            }
+            .cell-date-adat { 
+                width: 140px; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 Date data color */
+            }
+            .cell-start-adat { 
+                width: 120px; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 Start time data color */
+            }
+            .cell-end-adat { 
+                width: 120px; 
+                font-size: 22px;
+                color: #dc3545;  /* 🎨 End time data color */
+            }
+            .cell-letszam { 
+                width: 100px; 
+                font-weight: bold;
+                color: #000000ff;  /* 🎨 Participant count label color */
+            }
+            .cell-letszam-adat { 
+                width: 40px;
+                color: #000000ff;  /* 🎨 Participant count data color */
+            }
+            .cell-alperes-terhelt { 
+                width: 240px; 
+                font-weight: bold;
+                color: #000000ff;  /* 🎨 Defendant label color */
+            }
+            .cell-felperes-vadlo { 
+                width: 240px; 
+                font-weight: bold;
+                color: #000000ff;  /* 🎨 Plaintiff label color */
+            }
+            .cell-alperes-terhelt-adat { 
+                width: 240px;
+                color: #000000ff;  /* 🎨 Defendant data color */
+            }
+            .cell-felperes-vadlo-adat { 
+                width: 240px;
+                color: #000000ff;  /* 🎨 Plaintiff data color */
+            }
+            .cell-targy { 
+                width: 80px; 
+                font-weight: bold;
+                color: #000000ff;  /* 🎨 Subject label color */
+            }
+            .cell-targy-adat { 
+                width: 100%;
+                color: #000000ff;  /* 🎨 Subject data color */
+            }
+            .bold { 
+                font-weight: bold; 
+            }
         </style>
         <title>';
 
