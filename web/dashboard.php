@@ -91,12 +91,12 @@ $userGroups = $_SESSION['groups'] ?? [];
 
     <div id="content-area" class="container"></div>
     
-    <footer>
-        <!--div class="container">
+    <!--footer>
+        <div class="container">
             <p>&copy; <?php echo date("Y"); ?> | Budapest Környéki Törvényszék | Minden jog fenntartva. <br />
             Készítette: Martínez Luis Dávid & Papp Ágoston</p>
-        </div-->
-    </footer>
+        </div>
+    </footer-->
 
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
