@@ -14,7 +14,7 @@ if (!Auth::isAuthenticated()) {
 
 if (!Auth::canDelete()) {
     $_SESSION['error_message'] = 'Nincs jogosultságod a bejegyzések törléséhez!';
-    header('Location: list.php');
+    header('Location: dashboard.php');
     exit;
 }
 
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete']) && 
         $stmt->execute([':id' => $id]);
         
         $_SESSION['success_message'] = 'A bejegyzés sikeresen törölve!';
-        header('Location: list.php');
+        header('Location: dashboard.php');
         exit;
     } catch (PDOException $e) {
         $error = 'Törlési hiba: ' . htmlspecialchars($e->getMessage());
@@ -107,8 +107,8 @@ if ($entry) {
                         <i class="fa-solid fa-circle-xmark"></i> <?= $error ?>
                     </div>
                     <div class="text-center mt-4">
-                        <a href="list.php" class="btn btn-secondary">
-                            <i class="fa-solid fa-arrow-left"></i> Vissza a listához
+                        <a href="dashboard.php" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrow-left"></i> Vissza
                         </a>
                     </div>
                 <?php elseif ($entry): ?>
@@ -163,7 +163,7 @@ if ($entry) {
 
                     <form method="POST" class="mt-4">
                         <div class="d-flex justify-content-center gap-3">
-                            <a href="list.php" class="btn btn-cancel btn-lg">
+                            <a href="dashboard.php" class="btn btn-cancel btn-lg">
                                 <i class="fa-solid fa-times"></i> Mégse
                             </a>
                             <button type="submit" name="confirm_delete" class="btn btn-danger btn-lg">

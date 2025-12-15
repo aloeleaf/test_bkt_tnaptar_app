@@ -1,3 +1,13 @@
+<?php
+session_start();
+require_once __DIR__ . '/app/Auth.php';
+
+// Check if user has create permissions
+if (!Auth::canCreate()) {
+    echo '<div class="alert alert-danger">Nincs jogosultságod új bejegyzések létrehozásához!</div>';
+    exit;
+}
+?>
 <h2 class="mb-4 text-center">Új tárgyalási naptár időpont rögzítése</h2>
 
 <div class="card p-4 shadow-sm">

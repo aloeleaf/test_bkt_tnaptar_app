@@ -6,8 +6,28 @@ if (!Auth::isAuthenticated()) {
     header("Location: index.php");
     exit;
 }
+
+// Handle permission refresh request - force logout and re-login
+if (isset($_GET['refresh_permissions'])) {
+    session_unset();
+    session_destroy();
+    header("Location: index.php?message=please_login_again");
+    exit;
+}
+
+// Check if session is older than 30 minutes and force re-authentication
+$sessionAge = time() - strtotime($_SESSION['login_time'] ?? 'now');
+if ($sessionAge > 1800) { // 30 minutes
+    session_unset();
+    session_destroy();
+    header("Location: index.php?message=session_expired");
+    exit;
+}
+
 $nev = $_SESSION['display_name'] ?? $_SESSION['user'];
 $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
+$userRole = Auth::getUserRole();
+$userGroups = $_SESSION['groups'] ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -27,22 +47,23 @@ $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <?php
-            if (in_array('BKT_TargyaloFoglalo', $_SESSION['groups'])) {
+            // All authenticated users can view the list
+            if (Auth::canViewList()) {
                 echo '<li class="nav-item">
                         <a class="nav-link load-page" href="#" data-page="list.php"><i class="fa-solid fa-people-roof"></i> Tárgyalási jegyzékek</a>
-                    </li>
-                    <li class="nav-item">
+                    </li>';
+            }
+            
+            // Szerkeszto, Felugyelo, and Admin can create/edit (Rögzítés)
+            if (Auth::canCreate()) {
+                echo '<li class="nav-item">
                         <a class="nav-link load-page" href="#" data-page="rogzites.php"><i class="fa-solid fa-list-check"></i> Rögzítés</a>
                     </li>';
             }
-            if (in_array('BKT_TargyaloFoglaloAdmin', $_SESSION['groups'])) {
-                echo '<li class="nav-item">
-                        <a class="nav-link load-page" href="#" data-page="list.php"><i class="fa-solid fa-people-roof"></i> Tárgyalási jegyzékek</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link load-page" href="#" data-page="rogzites.php"><i class="fa-solid fa-list-check"></i> Rögzítés</a>
-                    </li>
-                    <li class="nav-item">
+            
+            // Only Admin can see settings
+            if (Auth::canViewSettings()) {
+                echo '<li class="nav-link">
                         <a class="nav-link load-page" href="#" data-page="settings.php"><i class="fa-solid fa-screwdriver-wrench"></i> Beállítások</a>
                     </li>';
             }
@@ -52,6 +73,11 @@ $loginIdo = $_SESSION['login_time'] ?? 'ismeretlen időpont';
                     <li class="nav-item">
                         <span class="nav-link text-white"><i class="fa-solid fa-user"></i> Üdvözlünk <?= htmlspecialchars($nev) ?>!</span>
                     </li>
+                    <?php /* Debug info - uncomment to see user role and groups
+                    <li class="nav-item">
+                        <span class="nav-link text-white">Role: <?= htmlspecialchars($userRole) ?> | Groups: <?= htmlspecialchars(implode(', ', $userGroups)) ?></span>
+                    </li>
+                    */ ?>
                     <li class="nav-item">
                         <span class="nav-link text-white">Belépés ideje: <?= htmlspecialchars($loginIdo) ?></span>
                     </li>

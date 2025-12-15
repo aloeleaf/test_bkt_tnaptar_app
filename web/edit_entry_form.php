@@ -1,6 +1,14 @@
 <?php
 // filepath: \srv\containers\test_bkt_tnaptar_app\web\edit_entry_form.php
 // This file contains only HTML for AJAX loading
+session_start();
+require_once __DIR__ . '/app/Auth.php';
+
+// Check if user has edit permissions
+if (!Auth::canEdit()) {
+    echo '<div class="alert alert-danger">Nincs jogosultságod bejegyzések szerkesztéséhez!</div>';
+    exit;
+}
 ?>
 <div class="container mt-5">
     <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptár szerkesztése</h1>

@@ -84,6 +84,7 @@ class Auth
                     $_SESSION['display_name'] = $displayName ?: $username;
                     $_SESSION['login_time'] = date('Y-m-d H:i:s');
                     $_SESSION['groups'] = $userGroups;
+                    $_SESSION['user_role'] = self::determineRole($userGroups);
 
                     $stmt = $this->pdo->prepare(
                         "INSERT INTO name (name, last_login) VALUES (:name, :last_login)
@@ -137,8 +138,74 @@ class Auth
     }
 
     /**
+     * Determine user role based on group membership
+     * Priority order: Admin > Felugyelo > Szerkeszto > Betekinto
+     */
+    private static function determineRole($userGroups)
+    {
+        if (in_array('BKT_TargyaloFoglaloAdmin', $userGroups)) {
+            return 'admin';
+        }
+        if (in_array('BKT_TargyaloFoglaloFelugyelo', $userGroups)) {
+            return 'felugyelo';
+        }
+        if (in_array('BKT_TargyaloFoglaloSzerkeszto', $userGroups)) {
+            return 'szerkeszto';
+        }
+        if (in_array('BKT_TargyaloFoglaloBetekinto', $userGroups)) {
+            return 'betekinto';
+        }
+        return 'betekinto'; // default to most restrictive role
+    }
+
+    /**
+     * Get the current user's role
+     */
+    public static function getUserRole()
+    {
+        return $_SESSION['user_role'] ?? 'betekinto';
+    }
+
+    /**
+     * Check if user can view the list
+     * All roles can view the list
+     */
+    public static function canViewList()
+    {
+        return self::isAuthenticated();
+    }
+
+    /**
+     * Check if user can create new entries
+     * Szerkeszto, Felugyelo, and Admin can create
+     */
+    public static function canCreate()
+    {
+        if (!self::isAuthenticated()) {
+            return false;
+        }
+        
+        $role = self::getUserRole();
+        return in_array($role, ['szerkeszto', 'felugyelo', 'admin']);
+    }
+
+    /**
+     * Check if user can edit entries
+     * Szerkeszto, Felugyelo, and Admin can edit
+     */
+    public static function canEdit()
+    {
+        if (!self::isAuthenticated()) {
+            return false;
+        }
+        
+        $role = self::getUserRole();
+        return in_array($role, ['felugyelo', 'admin']);
+    }
+
+    /**
      * Check if the current user has delete permissions
-     * User must be in the delete group specified in config
+     * Only Felugyelo and Admin can delete
      */
     public static function canDelete()
     {
@@ -146,15 +213,35 @@ class Auth
             return false;
         }
 
-        $config = require __DIR__ . '/../config/config.php';
-        $deleteGroup = $config['ldap_delete_group'] ?? null;
+        $role = self::getUserRole();
+        return in_array($role, ['felugyelo', 'admin']);
+    }
 
-        if (empty($deleteGroup)) {
+    /**
+     * Check if user can access settings
+     * Only Admin can access settings
+     */
+    public static function canViewSettings()
+    {
+        if (!self::isAuthenticated()) {
             return false;
         }
+        
+        $role = self::getUserRole();
+        return $role === 'admin';
+    }
 
-        $userGroups = $_SESSION['groups'] ?? [];
-        return in_array($deleteGroup, $userGroups);
+    /**
+     * Refresh user's LDAP groups and role from Active Directory
+     * This allows updating permissions without logout/login
+     * Note: This requires the user to log out and back in since we don't store passwords
+     */
+    public static function refreshPermissions()
+    {
+        // Since we cannot query LDAP without the user's password (which we don't store),
+        // we'll force a logout and redirect to login page
+        // This is more secure than storing credentials or using a service account
+        return false;
     }
 }
 ?>

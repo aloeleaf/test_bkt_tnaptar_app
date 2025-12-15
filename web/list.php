@@ -9,7 +9,8 @@ require_once __DIR__ . '/app/Auth.php';
 $db = new Database($config);
 $pdo = $db->getPdo();
 
-// Check if user has delete permissions
+// Check user permissions
+$canEdit = Auth::canEdit();
 $canDelete = Auth::canDelete();
 
 // Safe ORDER BY mapping - prevents SQL injection
@@ -154,9 +155,11 @@ $filtered_entries = array_map(function ($row) {
                         </div>
                         <div class="card-footer text-center">
                             <?php if (!empty($data['id'])): ?>
-                                <a href="#" class="btn btn-primary btn-sm edit-button" data-id="<?= htmlspecialchars($data['id']); ?>">
-                                    <i class="fa-solid fa-edit"></i> Szerkesztés
-                                </a>
+                                <?php if ($canEdit): ?>
+                                    <a href="#" class="btn btn-primary btn-sm edit-button" data-id="<?= htmlspecialchars($data['id']); ?>">
+                                        <i class="fa-solid fa-edit"></i> Szerkesztés
+                                    </a>
+                                <?php endif; ?>
                                 <?php if ($canDelete): ?>
                                     <a href="delete_entry.php?id=<?= htmlspecialchars($data['id']); ?>" class="btn btn-danger btn-sm ms-2">
                                         <i class="fa-solid fa-trash"></i> Törlés

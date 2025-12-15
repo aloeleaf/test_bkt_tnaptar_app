@@ -4,6 +4,9 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 header('Content-Type: application/json; charset=utf-8');
 
+session_start();
+require_once __DIR__ . '/Auth.php';
+
 $config = require __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/Database.php';
 
@@ -13,6 +16,11 @@ function respond(array $payload, int $code = 200): void {
     while (ob_get_level() > 0) { ob_end_clean(); }
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
+}
+
+// Check authentication
+if (!Auth::isAuthenticated()) {
+    respond(['success' => false, 'message' => 'Nincs bejelentkezve!', 'data' => null], 401);
 }
 
 try {
@@ -43,6 +51,11 @@ if ($method === 'GET') {
         respond(['success' => false, 'message' => 'Adatbázis hiba: ' . $e->getMessage(), 'data' => null], 500);
     }
 } elseif ($method === 'POST') {
+    // Check if user has edit/create permissions
+    if (!Auth::canEdit()) {
+        respond(['success' => false, 'message' => 'Nincs jogosultságod bejegyzések szerkesztéséhez!', 'data' => null], 403);
+    }
+    
     // Handle both legacy form (rogzites.php) and new edit form field names
     $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
     
