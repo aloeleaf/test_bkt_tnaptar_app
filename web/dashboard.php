@@ -73,11 +73,10 @@ $userGroups = $_SESSION['groups'] ?? [];
                     <li class="nav-item">
                         <span class="nav-link text-white"><i class="fa-solid fa-user"></i> Üdvözlünk <?= htmlspecialchars($nev) ?>!</span>
                     </li>
-                    <?php /* Debug info - uncomment to see user role and groups
-                    <li class="nav-item">
+                    <?php /* Debug info - uncomment to see user role and groups */ ?>
+                    <!--li class="nav-item">
                         <span class="nav-link text-white">Role: <?= htmlspecialchars($userRole) ?> | Groups: <?= htmlspecialchars(implode(', ', $userGroups)) ?></span>
-                    </li>
-                    */ ?>
+                    </li-->
                     <li class="nav-item">
                         <span class="nav-link text-white">Belépés ideje: <?= htmlspecialchars($loginIdo) ?></span>
                     </li>
@@ -91,7 +90,7 @@ $userGroups = $_SESSION['groups'] ?? [];
 
     <div id="content-area" class="container"></div>
     
-    <!--footer>
+    <!-- footer>
         <div class="container">
             <p>&copy; <?php echo date("Y"); ?> | Budapest Környéki Törvényszék | Minden jog fenntartva. <br />
             Készítette: Martínez Luis Dávid & Papp Ágoston</p>
