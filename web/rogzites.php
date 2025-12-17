@@ -8,9 +8,10 @@ if (!Auth::canCreate()) {
     exit;
 }
 ?>
-<h2 class="mb-4 text-center">Új tárgyalási naptár időpont rögzítése</h2>
 
+ <h1 class="mb-4 text-center mt-custom-top-margin">Új tárgyalási naptár időpont rögzítése</h1>
 <div class="card p-4 shadow-sm">
+   
     <h3 class="card-title mb-4  text-dark">Tárgyalási adatai</h3>
     <div id="formMessage" class="alert d-none" role="alert"></div>
 

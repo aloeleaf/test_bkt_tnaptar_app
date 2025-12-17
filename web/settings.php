@@ -19,8 +19,9 @@ if (!Auth::canViewSettings()) {
     <meta name="author" content="Martínez Luis Dávid & Papp Ágoston" />
 </head>
 <body>
+<h1 class="mb-4 text-center mt-custom-top-margin">Adminisztrációs felület</h1>    
 <div class="container mt-5">
-    <h1 class="text-center mb-5">Adminisztrációs felület</h1>
+    
 
     <div class="row">
         <div class="col-12 col-md-6 mb-4">

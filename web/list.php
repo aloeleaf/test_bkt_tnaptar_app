@@ -64,8 +64,9 @@ $filtered_entries = array_map(function ($row) {
 }, $rows);
 ?>
 
+<h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptár lista</h1>
 <div class="container mt-5">
-    <h1 class="mb-4 text-center mt-custom-top-margin">Tárgyalási naptár lista</h1>
+    
 
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
