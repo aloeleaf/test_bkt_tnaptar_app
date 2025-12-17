@@ -48,13 +48,16 @@ services:
       - traefikproxy
     labels:
       - "traefik.enable=true"
-      # HTTP router
+      # HTTP router (restricted to internal network only)
       - "traefik.http.routers.nginx-http.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
       - "traefik.http.routers.nginx-http.entrypoints=web"
-      # HTTPS router
+      - "traefik.http.routers.nginx-http.middlewares=internal-only"
+      # HTTPS router (accessible from anywhere)
       - "traefik.http.routers.nginx-https.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
       - "traefik.http.routers.nginx-https.entrypoints=websecure"
       - "traefik.http.routers.nginx-https.tls=true"
+      # IP whitelist middleware - restrict HTTP to internal networks only
+      - "traefik.http.middlewares.internal-only.ipwhitelist.sourcerange=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
       # Service (shared by both routers)
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
 
