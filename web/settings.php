@@ -1,3 +1,13 @@
+<?php
+session_start();
+require_once __DIR__ . '/app/Auth.php';
+
+// Check if user has settings permissions (Admin only)
+if (!Auth::canViewSettings()) {
+    echo '<div class="alert alert-danger">Nincs jogosultságod a beállítások megtekintéséhez!</div>';
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -9,16 +19,6 @@
     <meta name="author" content="Martínez Luis Dávid & Papp Ágoston" />
 </head>
 <body>
-<?php
-session_start();
-require_once __DIR__ . '/app/Auth.php';
-
-// Check if user has settings permissions (Admin only)
-if (!Auth::canViewSettings()) {
-    echo '<div class="alert alert-danger">Nincs jogosultságod a beállítások megtekintéséhez!</div>';
-    exit;
-}
-?>
 <div class="container mt-5">
     <h1 class="text-center mb-5">Adminisztrációs felület</h1>
 

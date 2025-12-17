@@ -63,7 +63,7 @@ $userGroups = $_SESSION['groups'] ?? [];
             
             // Only Admin can see settings
             if (Auth::canViewSettings()) {
-                echo '<li class="nav-link">
+                echo '<li class="nav-item">
                         <a class="nav-link load-page" href="#" data-page="settings.php"><i class="fa-solid fa-screwdriver-wrench"></i> Beállítások</a>
                     </li>';
             }

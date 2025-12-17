@@ -14,10 +14,8 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Note: Session should be started by the calling script before including this file
+// Do not start session here to avoid "headers already sent" errors
 
 class Auth
 {

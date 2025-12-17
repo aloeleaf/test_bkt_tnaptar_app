@@ -1,6 +1,11 @@
 <?php
 // filepath: \srv\containers\test_bkt_tnaptar_app\web\includes\header.php
 
+// Start session before loading Auth.php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../app/Auth.php';
 $config = require_once __DIR__ . '/../config/config.php';
 $paths = require_once __DIR__ . '/../config/paths.php';
