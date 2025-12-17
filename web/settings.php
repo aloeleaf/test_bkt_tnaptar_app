@@ -8,17 +8,7 @@ if (!Auth::canViewSettings()) {
     exit;
 }
 ?>
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kategóriák kezelése</title>
-    <link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/fontawesome/css/all.min.css" rel="stylesheet">
-    <meta name="author" content="Martínez Luis Dávid & Papp Ágoston" />
-</head>
-<body>
+
 <h1 class="mb-4 text-center mt-custom-top-margin">Adminisztrációs felület</h1>    
 <div class="container mt-5">
     

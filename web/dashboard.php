@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/app/Auth.php';
+$paths = require_once __DIR__ . '/config/paths.php';
+$base_url = $paths['base_url'];
 
 if (!Auth::isAuthenticated()) {
     header("Location: index.php");
@@ -36,10 +38,19 @@ $userGroups = $_SESSION['groups'] ?? [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kezdőlap</title>
-    <link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/css/main.css" rel="stylesheet" />
-    <link href="assets/fontawesome/css/all.css" rel="stylesheet" />
-    <meta name="author" content="Martínez Luis Dávid & Papp Ágoston" />
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    <!-- Stylesheets using base_url -->
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/main.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/fontawesome/css/all.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="<?= $base_url ?>/favicon.ico">
 </head>
 <body class="no-flex">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
@@ -97,10 +108,10 @@ $userGroups = $_SESSION['groups'] ?? [];
         </div>
     </footer-->
 
-    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/main.js"></script>
-    <script src="assets/js/settings.js"></script>
-    <!-- <script src="assets/js/list_search.js"></script> -->
+    <script src="<?= $base_url ?>/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= $base_url ?>/assets/js/main.js"></script>
+    <script src="<?= $base_url ?>/assets/js/settings.js"></script>
+    <!-- <script src="<?= $base_url ?>/assets/js/list_search.js"></script> -->
     
 </body>
 </html>
