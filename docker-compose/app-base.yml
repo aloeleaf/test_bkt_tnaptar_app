@@ -57,7 +57,7 @@ services:
       - "traefik.http.routers.nginx-https.entrypoints=websecure"
       - "traefik.http.routers.nginx-https.tls=true"
       # IP whitelist middleware - restrict HTTP to internal networks only
-      - "traefik.http.middlewares.internal-only.ipwhitelist.sourcerange=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
+      - "traefik.http.middlewares.internal-only.ipwhitelist.sourcerange=10.15.55.0/24,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
       # Service (shared by both routers)
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
 
