@@ -779,7 +779,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_category_active ON settings(category, ac
 SELECT setval('login_attempts_id_seq', COALESCE((SELECT MAX(id) FROM login_attempts), 1));
 SELECT setval('name_id_seq', COALESCE((SELECT MAX(id) FROM name), 1));
 SELECT setval('rooms_id_seq', COALESCE((SELECT MAX(id) FROM rooms), 1));
-SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 576));
+SELECT setval('settings_id_seq', COALESCE((SELECT MAX(id) FROM settings), 1));
 
 -- ==========================================
 -- Log completion
