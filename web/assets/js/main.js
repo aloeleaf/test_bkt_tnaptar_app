@@ -70,6 +70,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = JSON.parse(raw);
 
                 if (data.success && Array.isArray(data.data)) {
+                    // Sort alphabetically using Hungarian locale
+                    data.data.sort((a, b) => a.value.localeCompare(b.value, 'hu'));
+                    
                     data.data.forEach(item => {
                         const option = document.createElement('option');
                         option.value = item.value;
@@ -126,6 +129,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(`Response for ${type}:`, data); // Debug
 
                 if (data.success && Array.isArray(data.data)) {
+                    // Sort alphabetically using Hungarian locale
+                    data.data.sort((a, b) => a.value.localeCompare(b.value, 'hu'));
+                    
                     data.data.forEach(item => {
                         const option = document.createElement('option');
                         option.value = item.value;

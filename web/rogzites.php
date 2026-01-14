@@ -7,6 +7,32 @@ if (!Auth::canCreate()) {
     echo '<div class="alert alert-danger">Nincs jogosultságod új bejegyzések létrehozásához!</div>';
     exit;
 }
+
+// Load dropdown data from database
+$config = require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/app/Database.php';
+
+$courts = $councils = $rooms = $persons = [];
+try {
+    $db = new Database($config);
+    $pdo = $db->getPdo();
+    
+    $stmt = $pdo->prepare("SELECT value FROM settings WHERE category = ? AND active = TRUE ORDER BY value COLLATE utf8mb4_hungarian_ci");
+    
+    $stmt->execute(['birosag']);
+    $courts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $stmt->execute(['tanacs']);
+    $councils = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $stmt->execute(['room']);
+    $rooms = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $stmt->execute(['resztvevok']);
+    $persons = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    error_log("rogzites.php: Failed to load dropdown data - " . $e->getMessage());
+}
 ?>
 
  <h1 class="mb-4 text-center mt-custom-top-margin">Új tárgyalási naptár időpont rögzítése</h1>
