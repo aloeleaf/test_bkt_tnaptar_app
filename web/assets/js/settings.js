@@ -82,8 +82,17 @@ async function loadDropdown(category) {
         return;
     }
 
+    // Category-specific placeholders
+    const placeholders = {
+        'birosag': 'Válasszon bíróságot...',
+        'tanacs': 'Válasszon tanácsot...',
+        'room': 'Válasszon tárgyalót...',
+        'resztvevok': 'Válasszon résztvevőt...'
+    };
+    const placeholder = placeholders[category] || 'Válasszon...';
+
     // Clear existing options (keep first placeholder)
-    selectElement.innerHTML = '<option value="">Válasszon...</option>';
+    selectElement.innerHTML = `<option value="">${placeholder}</option>`;
     console.log(`Cleared ${category} dropdown, current options:`, selectElement.children.length);
     
     if (messageDiv) messageDiv.classList.add('d-none');
@@ -112,6 +121,10 @@ async function loadDropdown(category) {
 
         if (result.success && Array.isArray(result.data)) {
             console.log(`Adding ${result.data.length} options to ${category}`);
+            
+            // Sort alphabetically for all categories
+            result.data.sort((a, b) => a.value.localeCompare(b.value, 'hu'));
+            
             result.data.forEach((item, index) => {
                 console.log(`Adding option ${index}:`, item);
                 const option = document.createElement('option');

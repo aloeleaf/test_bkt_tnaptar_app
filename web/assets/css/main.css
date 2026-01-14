@@ -148,7 +148,7 @@ body.no-flex {
     background-color: #A52A2A;
     border-color: #333;
 }
-.form-control 
+.form-control, 
 .form-select {
     border: 1px solid #ced4da; 
     border-radius: 5px; 
