@@ -231,6 +231,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (orderByParam) {
                         setSelectedOption(document.getElementById('sortOrderSelect'), orderByParam);
                     }
+                    
+                    // Add event listener for sort order change
+                    const sortOrderSelect = document.getElementById('sortOrderSelect');
+                    if (sortOrderSelect) {
+                        sortOrderSelect.addEventListener('change', function() {
+                            const selectedOrder = this.value;
+                            loadPage('list.php', null, { orderBy: selectedOrder });
+                        });
+                    }
                 }
                 else if (page === 'settings.php' && typeof reloadAllLists === 'function') {
                     reloadAllLists();
