@@ -207,6 +207,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (page === 'list.php') {
             const currentSortBy = params.orderBy || document.getElementById('sortOrderSelect')?.value || 'date';
             urlParams.append('orderBy', currentSortBy);
+            
+            // Add filter parameters
+            const currentCourt = params.court || document.getElementById('filterCourt')?.value || '';
+            const currentCouncil = params.council || document.getElementById('filterCouncil')?.value || '';
+            const currentRoom = params.room || document.getElementById('filterRoom')?.value || '';
+            if (currentCourt) urlParams.append('court', currentCourt);
+            if (currentCouncil) urlParams.append('council', currentCouncil);
+            if (currentRoom) urlParams.append('room', currentRoom);
         }
 
         const queryString = urlParams.toString();
@@ -237,7 +245,64 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (sortOrderSelect) {
                         sortOrderSelect.addEventListener('change', function() {
                             const selectedOrder = this.value;
-                            loadPage('list.php', null, { orderBy: selectedOrder });
+                            const filterCourt = document.getElementById('filterCourt')?.value || '';
+                            const filterCouncil = document.getElementById('filterCouncil')?.value || '';
+                            const filterRoom = document.getElementById('filterRoom')?.value || '';
+                            loadPage('list.php', null, { 
+                                orderBy: selectedOrder,
+                                court: filterCourt,
+                                council: filterCouncil,
+                                room: filterRoom
+                            });
+                        });
+                    }
+                    
+                    // Add event listeners for filter changes
+                    const filterCourt = document.getElementById('filterCourt');
+                    if (filterCourt) {
+                        filterCourt.addEventListener('change', function() {
+                            const selectedCourt = this.value;
+                            const sortOrder = document.getElementById('sortOrderSelect')?.value || 'date';
+                            const filterCouncil = document.getElementById('filterCouncil')?.value || '';
+                            const filterRoom = document.getElementById('filterRoom')?.value || '';
+                            loadPage('list.php', null, { 
+                                orderBy: sortOrder,
+                                court: selectedCourt,
+                                council: filterCouncil,
+                                room: filterRoom
+                            });
+                        });
+                    }
+                    
+                    const filterCouncil = document.getElementById('filterCouncil');
+                    if (filterCouncil) {
+                        filterCouncil.addEventListener('change', function() {
+                            const selectedCouncil = this.value;
+                            const sortOrder = document.getElementById('sortOrderSelect')?.value || 'date';
+                            const filterCourt = document.getElementById('filterCourt')?.value || '';
+                            const filterRoom = document.getElementById('filterRoom')?.value || '';
+                            loadPage('list.php', null, { 
+                                orderBy: sortOrder,
+                                court: filterCourt,
+                                council: selectedCouncil,
+                                room: filterRoom
+                            });
+                        });
+                    }
+                    
+                    const filterRoom = document.getElementById('filterRoom');
+                    if (filterRoom) {
+                        filterRoom.addEventListener('change', function() {
+                            const selectedRoom = this.value;
+                            const sortOrder = document.getElementById('sortOrderSelect')?.value || 'date';
+                            const filterCourt = document.getElementById('filterCourt')?.value || '';
+                            const filterCouncil = document.getElementById('filterCouncil')?.value || '';
+                            loadPage('list.php', null, { 
+                                orderBy: sortOrder,
+                                court: filterCourt,
+                                council: filterCouncil,
+                                room: selectedRoom
+                            });
                         });
                     }
                 }

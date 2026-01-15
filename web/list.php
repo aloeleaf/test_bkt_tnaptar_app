@@ -13,6 +13,31 @@ $pdo = $db->getPdo();
 $canEdit = Auth::canEdit();
 $canDelete = Auth::canDelete();
 
+// Get filter parameters
+$filterCourt = $_GET['court'] ?? '';
+$filterCouncil = $_GET['council'] ?? '';
+$filterRoom = $_GET['room'] ?? '';
+
+// Load filter options from database
+$courts = [];
+$councils = [];
+$rooms = [];
+try {
+    $stmt = $pdo->prepare("SELECT DISTINCT birosag FROM rooms WHERE birosag IS NOT NULL AND birosag != '' ORDER BY birosag ASC");
+    $stmt->execute();
+    $courts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $stmt = $pdo->prepare("SELECT DISTINCT tanacs FROM rooms WHERE tanacs IS NOT NULL AND tanacs != '' ORDER BY tanacs ASC");
+    $stmt->execute();
+    $councils = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $stmt = $pdo->prepare("SELECT DISTINCT rooms FROM rooms WHERE rooms IS NOT NULL AND rooms != '' ORDER BY rooms ASC");
+    $stmt->execute();
+    $rooms = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    error_log("Failed to load filter options: " . $e->getMessage());
+}
+
 // Safe ORDER BY mapping - prevents SQL injection
 $orderOptions = [
     'date' => 'date DESC, start_time ASC',
@@ -29,10 +54,31 @@ if (!array_key_exists($orderBy, $orderOptions)) {
 
 $orderClause = $orderOptions[$orderBy];
 
+// Build WHERE clause for filters
+$whereConditions = ["date >= CURRENT_DATE - INTERVAL '28 days'"];
+$params = [];
+
+if (!empty($filterCourt)) {
+    $whereConditions[] = "birosag = :court";
+    $params[':court'] = $filterCourt;
+}
+
+if (!empty($filterCouncil)) {
+    $whereConditions[] = "tanacs = :council";
+    $params[':council'] = $filterCouncil;
+}
+
+if (!empty($filterRoom)) {
+    $whereConditions[] = "rooms = :room";
+    $params[':room'] = $filterRoom;
+}
+
+$whereClause = implode(' AND ', $whereConditions);
+
 // PostgreSQL kompatibilis lekérdezés
 try {
-    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE date >= CURRENT_DATE - INTERVAL '28 days' ORDER BY " . $orderClause);
-    $stmt->execute();
+    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE $whereClause ORDER BY " . $orderClause);
+    $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     echo '<div class="alert alert-danger">Adatbázis lekérdezési hiba: ' . htmlspecialchars($e->getMessage()) . '</div>';
@@ -84,9 +130,47 @@ $filtered_entries = array_map(function ($row) {
         <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
 
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-10">
+            <input type="text" class="form-control" id="Search" placeholder="Keresés ügyszám, bíróság és tanács alapján...">
+        </div>
+        <div class="col-md-2 text-end">
+            <button id="exportCsvBtn" class="btn btn-info btn-sm">
+                <i class="fa-solid fa-file-csv"></i> Exportálás CSV-be
+            </button>
+        </div>
+    </div>
+
     <div class="row mb-4 align-items-center">
-        <div class="col-md-7">
-            <input type="text" class="form-control" id="Search" placeholder="Keresés az ügyszám, bíróság és tanács alapján...">
+        <div class="col-md-3">
+            <select class="form-select form-select-sm" id="filterCourt">
+                <option value="">Összes bíróság</option>
+                <?php foreach ($courts as $court): ?>
+                    <option value="<?= htmlspecialchars($court) ?>" <?= ($filterCourt === $court ? 'selected' : '') ?>>
+                        <?= htmlspecialchars($court) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select form-select-sm" id="filterCouncil">
+                <option value="">Összes tanács</option>
+                <?php foreach ($councils as $council): ?>
+                    <option value="<?= htmlspecialchars($council) ?>" <?= ($filterCouncil === $council ? 'selected' : '') ?>>
+                        <?= htmlspecialchars($council) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select form-select-sm" id="filterRoom">
+                <option value="">Összes tárgyaló</option>
+                <?php foreach ($rooms as $room): ?>
+                    <option value="<?= htmlspecialchars($room) ?>" <?= ($filterRoom === $room ? 'selected' : '') ?>>
+                        <?= htmlspecialchars($room) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="col-md-3">
             <select class="form-select form-select-sm" id="sortOrderSelect">
@@ -96,11 +180,6 @@ $filtered_entries = array_map(function ($row) {
                 <option value="council_name" <?= ($orderBy === 'council_name' ? 'selected' : '') ?>>Rendezés: Tanács szerint</option>
                 <option value="room_date_time" <?= ($orderBy === 'room_date_time' ? 'selected' : '') ?>>Rendezés: Tárgyaló + Dátum + Idő</option>
             </select>
-        </div>
-        <div class="col-md-2 text-end">
-            <button id="exportCsvBtn" class="btn btn-info btn-sm">
-                <i class="fa-solid fa-file-csv"></i> Exportálás CSV-be
-            </button>
         </div>
     </div>
 
