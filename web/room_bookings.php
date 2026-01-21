@@ -8,7 +8,7 @@ $config = require __DIR__ . '/config/config.php';
 $db = new Database($config);
 $pdo = $db->getPdo();
 
-$room = isset($_GET['room']) ? $_GET['room'] : '';
+$room = isset($_GET['room']) ? trim($_GET['room']) : '';
 if (empty($room)) {
     echo '<h2>No room specified.</h2>';
     exit;
