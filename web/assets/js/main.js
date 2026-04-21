@@ -234,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (page === 'list.php') {
                     initSearch();
+                    SearchableSelect.reinit('#filterCourt, #filterCouncil, #filterRoom');
                     const currentUrlParams = new URLSearchParams(window.location.search);
                     const orderByParam = currentUrlParams.get('orderBy');
                     if (orderByParam) {
@@ -307,10 +308,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
                 else if (page === 'settings.php' && typeof reloadAllLists === 'function') {
-                    reloadAllLists();
+                    reloadAllLists(); // SearchableSelect.reinit called per-dropdown inside loadDropdown
                 }
                 else if (page === 'rogzites.php') {
                     populateDropdowns().then(() => {
+                        SearchableSelect.reinit('#jegyzekForm select.form-select');
                         if (dataId !== null) {
                             loadEditData(dataId);
                         } else {
@@ -362,10 +364,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const editResztvevokElement = document.getElementById('editResztvevok');
             console.log('editResztvevok element after HTML load:', editResztvevokElement);
 
-            // Populate dropdowns first
             console.log('Starting populateEditFormDropdowns...');
             await populateEditFormDropdowns();
             console.log('Finished populateEditFormDropdowns');
+            SearchableSelect.reinit('#editEntryForm select.form-select');
 
             // Then load entry data
             await loadEditFormData(entryId);

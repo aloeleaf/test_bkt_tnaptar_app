@@ -121,10 +121,10 @@ async function loadDropdown(category) {
 
         if (result.success && Array.isArray(result.data)) {
             console.log(`Adding ${result.data.length} options to ${category}`);
-            
+
             // Sort alphabetically for all categories
             result.data.sort((a, b) => a.value.localeCompare(b.value, 'hu'));
-            
+
             result.data.forEach((item, index) => {
                 console.log(`Adding option ${index}:`, item);
                 const option = document.createElement('option');
@@ -135,6 +135,10 @@ async function loadDropdown(category) {
                 console.log(`Added option, select now has ${selectElement.children.length} options`);
             });
             console.log(`Final ${category} dropdown:`, selectElement.innerHTML);
+
+            if (typeof SearchableSelect !== 'undefined') {
+                SearchableSelect.reinit(selectElement);
+            }
         } else {
             throw new Error(result.message || 'Helytelen adatformátum érkezett a szerverről.');
         }

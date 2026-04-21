@@ -109,6 +109,7 @@ $userGroups = $_SESSION['groups'] ?? [];
     </footer-->
 
     <script src="<?= $base_url ?>/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= $base_url ?>/assets/js/searchable-select.js"></script>
     <script src="<?= $base_url ?>/assets/js/main.js"></script>
     <script src="<?= $base_url ?>/assets/js/settings.js"></script>
     <!-- <script src="<?= $base_url ?>/assets/js/list_search.js"></script> -->

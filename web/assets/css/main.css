@@ -199,3 +199,47 @@ footer {
     background-color: rgba(255, 255, 255, 0.9);
      border: 2px solid  #A52A2A;
 }
+
+/* Searchable select */
+.ss-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.ss-input {
+    cursor: pointer;
+    width: 100%;
+}
+.ss-dropdown {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+.ss-dropdown.ss-open {
+    display: block;
+}
+.ss-option {
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    color: #574a49;
+}
+.ss-option:hover,
+.ss-option.ss-selected {
+    background-color: #A52A2A;
+    color: #fff;
+}
+.ss-option.ss-empty {
+    color: #aaa;
+    cursor: default;
+}
+.ss-option.ss-empty:hover {
+    background: none;
+    color: #aaa;
+}

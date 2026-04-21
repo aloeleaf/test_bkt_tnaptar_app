@@ -143,22 +143,3 @@ if (!Auth::canViewSettings()) {
         </div>
     </div>
 </div>
-
-<script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="assets/js/settings.js"></script>
-<script>
-// Initialize when page loads with debugging
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, checking for reloadAllLists function...');
-    setTimeout(() => {
-        if (typeof reloadAllLists === 'function') {
-            console.log('Calling reloadAllLists...');
-            reloadAllLists();
-        } else {
-            console.error('reloadAllLists function not found');
-        }
-    }, 100);
-});
-</script>
-</body>
-</html>
