@@ -49,17 +49,17 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP router (restricted to internal network only)
-      - "traefik.http.routers.nginx-http.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
-      - "traefik.http.routers.nginx-http.entrypoints=web"
-      - "traefik.http.routers.nginx-http.middlewares=internal-only"
+      - "traefik.http.routers.test_tnaptar-http.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
+      - "traefik.http.routers.test_tnaptar-http.entrypoints=web"
+      - "traefik.http.routers.test_tnaptar-http.middlewares=test_tnaptar-internal-only"
       # HTTPS router (accessible from anywhere)
-      - "traefik.http.routers.nginx-https.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
-      - "traefik.http.routers.nginx-https.entrypoints=websecure"
-      - "traefik.http.routers.nginx-https.tls=true"
+      - "traefik.http.routers.test_tnaptar-https.rule=Host(`test_tnaptar.bpkornyekitvsz.birosagiad.hu`)"
+      - "traefik.http.routers.test_tnaptar-https.entrypoints=websecure"
+      - "traefik.http.routers.test_tnaptar-https.tls=true"
       # IP whitelist middleware - restrict HTTP to internal networks only
-      - "traefik.http.middlewares.internal-only.ipwhitelist.sourcerange=10.15.55.0/24,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
+      - "traefik.http.middlewares.test_tnaptar-internal-only.ipwhitelist.sourcerange=10.15.55.0/24,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
       # Service (shared by both routers)
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+      - "traefik.http.services.test_tnaptar.loadbalancer.server.port=80"
 
   db:
     image: postgres:15
